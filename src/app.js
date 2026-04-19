@@ -162,6 +162,7 @@
         campaignId: "misty-ledger",
         title: "被撕裂的速记页",
         type: "纸质线索",
+        template: "私人信件",
         reveal: "编辑部搜查成功时",
         effect: "让玩家意识到记者不是随意失踪，而是已经接近某个名单。",
         contentText:
@@ -172,6 +173,7 @@
         campaignId: "misty-ledger",
         title: "尸检原始记录",
         type: "医疗档案",
+        template: "医疗报告",
         reveal: "说服或威压法医后",
         effect: "把调查从普通谋杀转向异常仪式与海上活动。",
         contentText:
@@ -182,6 +184,7 @@
         campaignId: "misty-ledger",
         title: "仓库登记簿影印件",
         type: "记录文书",
+        template: "档案记录",
         reveal: "潜入仓库或贿赂苦力后",
         effect: "建立假名、账簿和仓库的关联。",
         contentText:
@@ -318,10 +321,14 @@
       clueProps: normalizeEntityList(raw.clueProps || raw[LEGACY_KEYS.clueProps] || seed.clueProps, firstCampaignId, "clueProp", {
         title: "",
         type: "",
+        template: "通用纸张",
         reveal: "",
         effect: "",
         contentText: "",
-      }),
+      }).map((clueProp) => ({
+        ...clueProp,
+        template: inferCluePropTemplate(clueProp),
+      })),
       sessionLogs: normalizeEntityList(raw.sessionLogs || seed.sessionLogs, firstCampaignId, "log", {
         createdAt: nowLabel(),
         text: "",
@@ -439,29 +446,167 @@
     }, 2600);
   }
 
+  function formatEntityList(items, labelKey) {
+    const names = items.map((item) => item[labelKey]).filter(Boolean);
+    if (!names.length) return "未命名";
+    if (names.length <= 3) return names.join(" / ");
+    return `${names.slice(0, 3).join(" / ")} 等 ${names.length} 项`;
+  }
+
+  function inferCluePropTemplate(clueProp) {
+    const template = String(clueProp.template || "").trim();
+    if (template) return template;
+
+    const haystack = `${clueProp.title || ""} ${clueProp.type || ""}`.toLowerCase();
+    if (haystack.includes("报") || haystack.includes("新闻") || haystack.includes("剪报")) return "报纸剪报";
+    if (haystack.includes("尸检") || haystack.includes("医疗") || haystack.includes("法医") || haystack.includes("病历"))
+      return "医疗报告";
+    if (haystack.includes("档案") || haystack.includes("记录") || haystack.includes("登记") || haystack.includes("文书"))
+      return "档案记录";
+    if (haystack.includes("信") || haystack.includes("便条") || haystack.includes("速记")) return "私人信件";
+    return "通用纸张";
+  }
+
+  function getTemplateTone(template) {
+    return {
+      "通用纸张": "普通资料",
+      "报纸剪报": "旧报纸版式",
+      "私人信件": "私人书信版式",
+      "档案记录": "档案夹版式",
+      "医疗报告": "医务记录版式",
+    }[template || "通用纸张"];
+  }
+
+  function renderCluePropPreview(clueProp) {
+    const template = inferCluePropTemplate(clueProp);
+    const contentText = clueProp.contentText || "这里会显示线索道具正文预览。";
+    const templateKey =
+      {
+        "通用纸张": "generic",
+        "报纸剪报": "newspaper",
+        "私人信件": "letter",
+        "档案记录": "dossier",
+        "医疗报告": "medical",
+      }[template] || "generic";
+
+    const headerMarkup =
+      template === "报纸剪报"
+        ? `<div class="clue-prop-template-head"><span>剪报存档</span><strong>${clueProp.title}</strong></div>`
+        : template === "私人信件"
+        ? `<div class="clue-prop-template-head"><span>私人信件</span><strong>${clueProp.title}</strong></div>`
+        : template === "档案记录"
+        ? `<div class="clue-prop-template-head"><span>档案记录</span><strong>${clueProp.title}</strong></div>`
+        : template === "医疗报告"
+        ? `<div class="clue-prop-template-head"><span>医疗报告</span><strong>${clueProp.title}</strong></div>`
+        : `<div class="clue-prop-template-head"><span>线索资料</span><strong>${clueProp.title}</strong></div>`;
+
+    return `
+      <div class="clue-prop-preview">
+        <div class="clue-prop-preview-meta">
+          <p class="eyebrow">预览</p>
+          <span class="pill">${template}</span>
+        </div>
+        <div class="clue-prop-paper template-${templateKey}">
+          ${headerMarkup}
+          <div class="clue-prop-paper-body">${contentText}</div>
+          <div class="clue-prop-paper-foot">${getTemplateTone(template)}</div>
+        </div>
+      </div>
+    `;
+  }
+
   function getHealthCheck(campaign, bundle) {
     if (!campaign) return [];
     const issues = [];
+    const keyClues = bundle.clues.filter((item) => String(item.type || "").includes("关键"));
+    const scenesByKeyClue = new Map(
+      keyClues.map((clue) => [clue.id, bundle.scenes.filter((scene) => (scene.clueIds || []).includes(clue.id))])
+    );
+
     if (!bundle.scenes.length) {
       issues.push({ title: "没有场景", body: "建议至少建立 2 到 3 个核心调查场景，避免案件结构过空。" });
     }
     if (!bundle.clues.length) {
       issues.push({ title: "没有线索", body: "当前案件还没有任何线索，玩家会缺少推进调查的抓手。" });
     }
-    if (!campaign.currentSceneId) {
+    if (campaign.currentSceneId && !bundle.scenes.some((scene) => scene.id === campaign.currentSceneId)) {
+      issues.push({ title: "当前场景失效", body: "当前场景指向了一个不存在的场景，建议重新指定跑团入口。" });
+    } else if (!campaign.currentSceneId) {
       issues.push({ title: "未指定当前场景", body: "跑团模式更依赖当前场景，建议在总览里先指定一个。" });
     }
-    bundle.clues
-      .filter((item) => item.type.indexOf("关键") !== -1 && !String(item.fallback || "").trim())
-      .forEach((item) => {
-        issues.push({ title: `关键线索缺少补救：${item.title}`, body: "如果玩家错过这条线索，目前没有明确的备用来源说明。" });
+    if (keyClues.length === 1) {
+      issues.push({
+        title: "仅有一条关键线索",
+        body: `当前只有「${keyClues[0].title}」被标记为关键线索，建议至少再准备一条主推进抓手。`,
       });
-    bundle.scenes
-      .filter((item) => !String(item.clueNote || "").trim())
-      .forEach((item) => {
-        issues.push({ title: `场景缺少线索：${item.title}`, body: "这个场景还没有记录关键线索，可能会沦为纯过场。" });
+    }
+
+    const missingFallbackKeyClues = keyClues.filter((item) => !String(item.fallback || "").trim());
+    if (missingFallbackKeyClues.length) {
+      issues.push({
+        title: "关键线索缺少补救",
+        body: `这些关键线索目前还没有备用来源：${formatEntityList(missingFallbackKeyClues, "title")}。`,
       });
-    return issues.slice(0, 6);
+    }
+
+    const unlinkedKeyClues = keyClues.filter((item) => !(scenesByKeyClue.get(item.id) || []).length);
+    if (unlinkedKeyClues.length) {
+      issues.push({
+        title: "关键线索未落到场景",
+        body: `这些关键线索还没有挂到具体场景：${formatEntityList(unlinkedKeyClues, "title")}。`,
+      });
+    }
+
+    const keyCluesWithoutLead = keyClues.filter((item) => !String(item.leadsTo || "").trim());
+    if (keyCluesWithoutLead.length) {
+      issues.push({
+        title: "关键线索缺少导向",
+        body: `这些关键线索还没有说明会把调查带向哪里：${formatEntityList(keyCluesWithoutLead, "title")}。`,
+      });
+    }
+
+    const keyClueSceneSet = new Set(
+      keyClues.flatMap((item) => (scenesByKeyClue.get(item.id) || []).map((scene) => scene.id))
+    );
+    if (keyClues.length >= 2 && keyClueSceneSet.size === 1) {
+      const onlyScene = bundle.scenes.find((scene) => scene.id === [...keyClueSceneSet][0]);
+      issues.push({
+        title: "关键线索过度集中",
+        body: `多条关键线索都集中在「${onlyScene?.title || "同一场景"}」，建议分散到不同调查入口。`,
+      });
+    }
+
+    const clueLessScenes = bundle.scenes.filter((item) => !(item.clueIds || []).length && !String(item.clueNote || "").trim());
+    if (clueLessScenes.length) {
+      issues.push({
+        title: "存在空场景",
+        body: `这些场景既没有关联线索，也没有填写关键线索说明：${formatEntityList(clueLessScenes, "title")}。`,
+      });
+    }
+
+    const orphanNpcs = bundle.npcs.filter(
+      (npc) => String(npc.clue || npc.publicInfo || npc.secret || "").trim() && !bundle.scenes.some((scene) => (scene.npcIds || []).includes(npc.id))
+    );
+    if (orphanNpcs.length) {
+      issues.push({
+        title: "NPC 没有出场路径",
+        body: `这些 NPC 已写了信息，但没有挂到场景里：${formatEntityList(orphanNpcs, "name")}。`,
+      });
+    }
+
+    const orphanClueProps = bundle.clueProps.filter(
+      (clueProp) =>
+        String(clueProp.effect || clueProp.contentText || clueProp.reveal || "").trim() &&
+        !bundle.scenes.some((scene) => (scene.cluePropIds || []).includes(clueProp.id))
+    );
+    if (orphanClueProps.length) {
+      issues.push({
+        title: "线索道具没有出现场景",
+        body: `这些线索道具已经写好，但没有挂到场景里：${formatEntityList(orphanClueProps, "title")}。`,
+      });
+    }
+
+    return issues.slice(0, 8);
   }
 
   function uniqueById(items) {
@@ -1057,6 +1202,7 @@
       fields: [
         { name: "title", label: "标题", type: "input", required: true },
         { name: "type", label: "类型", type: "input", placeholder: "报纸 / 信件 / 档案" },
+        { name: "template", label: "展示模板", type: "select", options: ["通用纸张", "报纸剪报", "私人信件", "档案记录", "医疗报告"] },
         { name: "reveal", label: "揭示时机", type: "textarea", rows: 2, wide: true },
         { name: "effect", label: "作用", type: "textarea", rows: 3, wide: true },
         { name: "contentText", label: "正文内容", type: "textarea", rows: 8, wide: true },
@@ -1066,13 +1212,11 @@
           <article class="clue-prop-card">
             <header><div><p class="eyebrow">${item.type || "线索道具"}</p><h3>${item.title}</h3></div></header>
             <div class="key-value compact">
+              <div><strong>展示模板</strong><span>${inferCluePropTemplate(item)}</span></div>
               <div><strong>揭示时机</strong><span>${item.reveal || "未填写"}</span></div>
               <div><strong>作用</strong><span>${item.effect || "未填写"}</span></div>
             </div>
-            <div class="clue-prop-preview">
-              <p class="eyebrow">预览</p>
-              <div class="clue-prop-paper">${item.contentText || "这里会显示线索道具正文预览。"}</div>
-            </div>
+            ${renderCluePropPreview(item)}
             <div class="button-row">
               <button class="action-button" data-edit-entity="${item.id}">编辑</button>
               <button class="action-button danger" data-delete-entity="${item.id}">删除</button>
@@ -1512,13 +1656,11 @@
                 <span class="pill warning">待展示</span>
               </header>
               <div class="key-value">
+                <div><strong>展示模板</strong><span>${inferCluePropTemplate(clueProp)}</span></div>
                 <div><strong>触发条件</strong><span>${clueProp.reveal}</span></div>
                 <div><strong>场景效果</strong><span>${clueProp.effect}</span></div>
               </div>
-              <div class="clue-prop-preview">
-                <p class="eyebrow">预览</p>
-                <div class="clue-prop-paper">${clueProp.contentText || "这里会显示线索道具正文预览。"}</div>
-              </div>
+              ${renderCluePropPreview(clueProp)}
             </article>`
           )
           .join("")}
@@ -1591,6 +1733,8 @@
         ? { clueIds: [], npcIds: [], cluePropIds: [] }
         : entityType === "clues"
         ? { status: "未获得" }
+        : entityType === "clueProps"
+        ? { template: "通用纸张" }
         : {};
 
     if (entityId) {

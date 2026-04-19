@@ -783,6 +783,15 @@ select {
 
 .clue-prop-preview {
   margin-top: 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.clue-prop-preview-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .clue-prop-paper {
@@ -809,6 +818,92 @@ select {
     "Songti SC",
     "STSong",
     serif;
+}
+
+.clue-prop-template-head,
+.clue-prop-paper-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.clue-prop-template-head {
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(31, 27, 24, 0.12);
+}
+
+.clue-prop-template-head span,
+.clue-prop-paper-foot {
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(54, 40, 29, 0.72);
+}
+
+.clue-prop-template-head strong {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.clue-prop-paper-body {
+  white-space: pre-wrap;
+  min-height: 84px;
+}
+
+.clue-prop-paper-foot {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(31, 27, 24, 0.14);
+}
+
+.clue-prop-paper.template-newspaper {
+  background:
+    linear-gradient(180deg, rgba(248, 243, 232, 0.97), rgba(237, 229, 214, 0.97)),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 160px,
+      rgba(31, 27, 24, 0.04) 160px,
+      rgba(31, 27, 24, 0.04) 161px
+    );
+}
+
+.clue-prop-paper.template-letter {
+  background:
+    linear-gradient(180deg, rgba(255, 251, 244, 0.98), rgba(245, 236, 223, 0.98)),
+    radial-gradient(circle at top right, rgba(181, 144, 79, 0.18), transparent 25%);
+}
+
+.clue-prop-paper.template-letter .clue-prop-template-head {
+  border-bottom-style: dashed;
+}
+
+.clue-prop-paper.template-dossier {
+  background:
+    linear-gradient(180deg, rgba(244, 238, 229, 0.98), rgba(232, 223, 209, 0.98)),
+    repeating-linear-gradient(
+      180deg,
+      transparent,
+      transparent 22px,
+      rgba(31, 27, 24, 0.04) 22px,
+      rgba(31, 27, 24, 0.04) 23px
+    );
+  border-left: 5px solid rgba(125, 47, 47, 0.28);
+}
+
+.clue-prop-paper.template-medical {
+  background:
+    linear-gradient(180deg, rgba(243, 248, 247, 0.98), rgba(228, 237, 235, 0.98)),
+    repeating-linear-gradient(
+      180deg,
+      transparent,
+      transparent 24px,
+      rgba(48, 97, 102, 0.06) 24px,
+      rgba(48, 97, 102, 0.06) 25px
+    );
+  border-color: rgba(48, 97, 102, 0.26);
 }
 
 .quick-status-head {
