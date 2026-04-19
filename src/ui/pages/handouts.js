@@ -2,9 +2,9 @@ export function renderHandoutsLibrary({ root, handouts }) {
   if (!handouts.length) {
     root.innerHTML = `
       <section class="card empty-state">
-        <p class="eyebrow">Handouts</p>
-        <h3 class="section-title">当前案件还没有手outs</h3>
-        <p class="muted-copy">你可以在案件工作台的“手outs”标签中添加线索道具。</p>
+        <p class="eyebrow">线索道具</p>
+        <h3 class="section-title">当前案件还没有线索道具</h3>
+        <p class="muted-copy">你可以在案件工作台的“线索道具”标签中添加线索道具。</p>
       </section>
     `;
     return;

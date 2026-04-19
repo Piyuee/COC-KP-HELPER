@@ -40,7 +40,7 @@ The product is not just a note-taking tool. Its core purpose is to help a Keeper
 2. 服务跑团现场
    守秘人应能在几秒内找到需要的信息。
 3. 面向 COC 的专项支持
-   手outs、理智压力、秘密信息、恐怖节奏和备用线索都应是核心概念。
+   线索道具、理智压力、秘密信息、恐怖节奏和备用线索都应是核心概念。
 4. 明确区分真相与玩家认知
    守秘人需要同时记录“事实是什么”和“玩家目前相信什么”。
 
@@ -69,7 +69,7 @@ The product is not just a note-taking tool. Its core purpose is to help a Keeper
 - 笔记分散，跑团中难以快速检索
 - 关键线索可能被错过，导致调查停滞
 - NPC 的动机和关系难以长期保持一致
-- 手outs 难以整理，也不容易在合适时机展示
+- 线索道具难以整理，也不容易在合适时机展示
 - 场次记录无法顺畅转化为下次开团准备
 
 ## Information Architecture
@@ -88,7 +88,7 @@ The product is not just a note-taking tool. Its core purpose is to help a Keeper
 - 案件库
 - 案件工作台
 - 跑团模式
-- 手outs 库
+- 线索道具库
 - 规则速查
 - 设置
 
@@ -111,7 +111,7 @@ The product is not just a note-taking tool. Its core purpose is to help a Keeper
 - NPC
 - 地点
 - 时间线
-- 手outs
+- 线索道具
 - 真相与结局
 
 ## Product Differentiation

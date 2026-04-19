@@ -68,7 +68,7 @@ function renderApp() {
       renderApp();
     },
     onDeleteCampaign: (campaignId) => {
-      if (!confirmDelete("删除案件会同时移除其场景、线索、NPC、手outs和跑团记录，确定继续吗？")) return;
+      if (!confirmDelete("删除案件会同时移除其场景、线索、NPC、线索道具和跑团记录，确定继续吗？")) return;
       store.removeCampaign(campaignId);
       renderApp();
     },
@@ -104,7 +104,7 @@ function renderApp() {
       renderApp();
     },
     onDeleteEntity: (entityId) => {
-      const label = state.workspaceTab === "scenes" ? "场景" : state.workspaceTab === "clues" ? "线索" : state.workspaceTab === "npcs" ? "NPC" : "手outs";
+      const label = state.workspaceTab === "scenes" ? "场景" : state.workspaceTab === "clues" ? "线索" : state.workspaceTab === "npcs" ? "NPC" : "线索道具";
       if (!confirmDelete(`确定删除这条${label}吗？`)) return;
       store.removeEntity(currentEntityType, entityId);
       renderApp();

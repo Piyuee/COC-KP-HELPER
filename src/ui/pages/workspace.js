@@ -10,7 +10,7 @@ const entityConfig = {
       { name: "clueNote", label: "关键线索", type: "textarea", rows: 3 },
       { name: "fallback", label: "补救线索", type: "textarea", rows: 3 },
       { name: "npcIds", label: "关联 NPC", type: "multiselect", optionKey: "npcs", optionLabel: "name" },
-      { name: "handoutIds", label: "关联手outs", type: "multiselect", optionKey: "handouts", optionLabel: "title" },
+      { name: "handoutIds", label: "关联线索道具", type: "multiselect", optionKey: "handouts", optionLabel: "title" },
     ],
     renderCard(item, context) {
       const npcNames = item.npcIds.map((id) => context.npcs.find((npc) => npc.id === id)?.name).filter(Boolean);
@@ -31,7 +31,7 @@ const entityConfig = {
             <div><strong>线索</strong><span>${item.clueNote || "未填写"}</span></div>
             <div><strong>补救</strong><span>${item.fallback || "未填写"}</span></div>
             <div><strong>NPC</strong><span>${npcNames.join(" / ") || "未关联"}</span></div>
-            <div><strong>手outs</strong><span>${handoutTitles.join(" / ") || "未关联"}</span></div>
+            <div><strong>线索道具</strong><span>${handoutTitles.join(" / ") || "未关联"}</span></div>
           </div>
           <div class="button-row">
             <button class="action-button" data-edit-entity="${item.id}">编辑</button>
@@ -114,7 +114,7 @@ const entityConfig = {
     },
   },
   handouts: {
-    title: "手outs",
+    title: "线索道具",
     collectionKey: "handouts",
     fields: [
       { name: "title", label: "标题", type: "input", required: true },
@@ -127,7 +127,7 @@ const entityConfig = {
         <article class="handout-card">
           <header>
             <div>
-              <p class="eyebrow">${item.type || "手outs"}</p>
+              <p class="eyebrow">${item.type || "线索道具"}</p>
               <h3>${item.title}</h3>
             </div>
           </header>
@@ -328,7 +328,7 @@ export function renderWorkspace({
         <button class="tab-button ${workspaceTab === "scenes" ? "active" : ""}" data-tab="scenes">场景</button>
         <button class="tab-button ${workspaceTab === "clues" ? "active" : ""}" data-tab="clues">线索</button>
         <button class="tab-button ${workspaceTab === "npcs" ? "active" : ""}" data-tab="npcs">NPC</button>
-        <button class="tab-button ${workspaceTab === "handouts" ? "active" : ""}" data-tab="handouts">手outs</button>
+        <button class="tab-button ${workspaceTab === "handouts" ? "active" : ""}" data-tab="handouts">线索道具</button>
       </div>
       <div class="workspace-columns">
         <section>

@@ -19,7 +19,7 @@ MVP 需要支持：
 - using a focused session-running view during play
 
 - 创建和维护案件
-- 定义场景、NPC、线索、地点和手outs
+- 定义场景、NPC、线索、地点和线索道具
 - 记录每次场次中发生的事情
 - 检查线索结构是否健康、是否有备用路径
 - 在跑团时使用一个聚焦的运行视图
@@ -48,7 +48,7 @@ P0 功能
 
 - 创建场景卡片
 - 记录氛围、进入条件、失败后果和备用线索说明
-- 将场景与 NPC、地点、手outs 和后续场景关联起来
+- 将场景与 NPC、地点、线索道具和后续场景关联起来
 
 ### Clue Management
 
@@ -76,15 +76,15 @@ NPC 管理
 
 ### Handout Management
 
-手outs 管理
+线索道具管理
 
 - Create or upload handouts
 - Tag by type
 - Bind handouts to clues and reveal conditions
 
-- 创建或上传手outs
+- 创建或上传线索道具
 - 按类型打标签
-- 将手outs 与线索和揭示条件绑定
+- 将线索道具与线索和揭示条件绑定
 
 ### Session Tracking
 
@@ -120,7 +120,7 @@ NPC 管理
 
 - Search campaigns, scenes, NPCs, locations, clues, and handouts
 
-- 搜索案件、场景、NPC、地点、线索和手outs
+- 搜索案件、场景、NPC、地点、线索和线索道具
 
 ## P1 Features
 
@@ -167,7 +167,7 @@ MVP 暂不包含
 1. 创建案件。
 2. 添加核心真相和可能结局。
 3. 创建场景并建立场景之间的关联。
-4. 添加 NPC、地点、线索和手outs。
+4. 添加 NPC、地点、线索和线索道具。
 5. 在跑团时打开跑团模式。
 6. 实时记录事件并更新线索状态。
 7. 在场次结束后回顾未解决线索。

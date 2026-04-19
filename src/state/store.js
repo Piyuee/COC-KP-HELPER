@@ -5,7 +5,7 @@ export const PAGE_TITLES = {
   campaigns: "案件库",
   workspace: "案件工作台",
   running: "跑团模式",
-  handouts: "手outs库",
+  handouts: "线索道具库",
   reference: "规则速查",
 };
 

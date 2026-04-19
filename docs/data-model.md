@@ -97,7 +97,7 @@ NPC 表
 
 ### handouts
 
-手outs 表
+线索道具 表
 
 - `id`
 - `campaign_id`
@@ -160,7 +160,7 @@ NPC 表
 
 ### scene_handouts
 
-场景与手outs 关联表
+场景与线索道具关联表
 
 - `scene_id`
 - `handout_id`
@@ -184,7 +184,7 @@ NPC 与线索关联表
 
 ### handout_clues
 
-手outs 与线索关联表
+线索道具与线索关联表
 
 - `handout_id`
 - `clue_id`
@@ -284,5 +284,5 @@ NPC 关系表
 - Keep clue fallback support explicit even if it duplicates some information.
 
 - 第一版所有长文本字段都先使用纯文本或 Markdown。
-- MVP 不需要过早把手outs 渲染能力建模得太复杂。
+- MVP 不需要过早把线索道具 渲染能力建模得太复杂。
 - 即便会出现一定信息重复，也要把线索的备用来源显式记录下来。

@@ -6,7 +6,7 @@
     campaigns: "案件库",
     workspace: "案件工作台",
     running: "跑团模式",
-    handouts: "手outs库",
+    handouts: "线索道具库",
     reference: "规则速查",
   };
 
@@ -464,7 +464,7 @@
     const searchable = [
       ...npcs.map((npc) => ({ type: "NPC", title: npc.name, body: `${npc.role} · ${npc.publicInfo}` })),
       ...clues.map((clue) => ({ type: "线索", title: clue.title, body: `${clue.source} · ${clue.content}` })),
-      ...handouts.map((handout) => ({ type: "手outs", title: handout.title, body: `${handout.type} · ${handout.effect}` })),
+      ...handouts.map((handout) => ({ type: "线索道具", title: handout.title, body: `${handout.type} · ${handout.effect}` })),
       ...(campaign ? [{ type: "案件", title: campaign.title, body: campaign.pitch }] : []),
     ].filter((item) => `${item.title} ${item.body}`.toLowerCase().includes(normalizedQuery));
 
@@ -668,7 +668,7 @@
 
     root.querySelectorAll("[data-delete]").forEach((button) => {
       button.addEventListener("click", () => {
-        if (!window.confirm("删除案件会同时移除其场景、线索、NPC、手outs和跑团记录，确定继续吗？")) return;
+        if (!window.confirm("删除案件会同时移除其场景、线索、NPC、线索道具和跑团记录，确定继续吗？")) return;
         removeCampaign(button.dataset.delete);
         renderApp();
       });
@@ -702,7 +702,7 @@
         { name: "fallback", label: "补救线索", type: "textarea", rows: 3, wide: true },
         { name: "clueIds", label: "关联线索", type: "multiselect", optionKey: "clues", optionLabel: "title" },
         { name: "npcIds", label: "关联 NPC", type: "multiselect", optionKey: "npcs", optionLabel: "name" },
-        { name: "handoutIds", label: "关联手outs", type: "multiselect", optionKey: "handouts", optionLabel: "title" },
+        { name: "handoutIds", label: "关联线索道具", type: "multiselect", optionKey: "handouts", optionLabel: "title" },
       ],
       renderCard(item, bundle) {
         const clueTitles = (item.clueIds || []).map((id) => bundle.clues.find((clue) => clue.id === id)?.title).filter(Boolean);
@@ -720,7 +720,7 @@
               <div><strong>关联线索</strong><span>${clueTitles.join(" / ") || "未关联"}</span></div>
               <div><strong>补救</strong><span>${item.fallback || "未填写"}</span></div>
               <div><strong>NPC</strong><span>${npcNames.join(" / ") || "未关联"}</span></div>
-              <div><strong>手outs</strong><span>${handoutTitles.join(" / ") || "未关联"}</span></div>
+              <div><strong>线索道具</strong><span>${handoutTitles.join(" / ") || "未关联"}</span></div>
             </div>
             <div class="button-row">
               <button class="action-button" data-edit-entity="${item.id}">编辑</button>
@@ -797,7 +797,7 @@
       },
     },
     handouts: {
-      title: "手outs",
+      title: "线索道具",
       collectionKey: "handouts",
       fields: [
         { name: "title", label: "标题", type: "input", required: true },
@@ -809,14 +809,14 @@
       renderCard(item) {
         return `
           <article class="handout-card">
-            <header><div><p class="eyebrow">${item.type || "手outs"}</p><h3>${item.title}</h3></div></header>
+            <header><div><p class="eyebrow">${item.type || "线索道具"}</p><h3>${item.title}</h3></div></header>
             <div class="key-value compact">
               <div><strong>揭示时机</strong><span>${item.reveal || "未填写"}</span></div>
               <div><strong>作用</strong><span>${item.effect || "未填写"}</span></div>
             </div>
             <div class="handout-preview">
               <p class="eyebrow">Preview</p>
-              <div class="handout-paper">${item.contentText || "这里会显示手outs正文预览。"}</div>
+              <div class="handout-paper">${item.contentText || "这里会显示线索道具正文预览。"}</div>
             </div>
             <div class="button-row">
               <button class="action-button" data-edit-entity="${item.id}">编辑</button>
@@ -1024,7 +1024,7 @@
           <button class="tab-button ${state.workspaceTab === "scenes" ? "active" : ""}" data-tab="scenes">场景</button>
           <button class="tab-button ${state.workspaceTab === "clues" ? "active" : ""}" data-tab="clues">线索</button>
           <button class="tab-button ${state.workspaceTab === "npcs" ? "active" : ""}" data-tab="npcs">NPC</button>
-          <button class="tab-button ${state.workspaceTab === "handouts" ? "active" : ""}" data-tab="handouts">手outs</button>
+          <button class="tab-button ${state.workspaceTab === "handouts" ? "active" : ""}" data-tab="handouts">线索道具</button>
         </div>
         <div class="workspace-columns">
           <section><div class="list-stack">${listMarkup}</div></section>
@@ -1064,7 +1064,7 @@
     root.querySelectorAll("[data-delete-entity]").forEach((button) => {
       button.addEventListener("click", () => {
         const label =
-          state.workspaceTab === "scenes" ? "场景" : state.workspaceTab === "clues" ? "线索" : state.workspaceTab === "npcs" ? "NPC" : "手outs";
+          state.workspaceTab === "scenes" ? "场景" : state.workspaceTab === "clues" ? "线索" : state.workspaceTab === "npcs" ? "NPC" : "线索道具";
         if (!window.confirm(`确定删除这条${label}吗？`)) return;
         removeEntity(state.workspaceTab, button.dataset.deleteEntity);
         renderApp();
@@ -1237,9 +1237,9 @@
     if (!handouts.length) {
       root.innerHTML = `
         <section class="card empty-state">
-          <p class="eyebrow">Handouts</p>
-          <h3 class="section-title">当前案件还没有手outs</h3>
-          <p class="muted-copy">你可以在案件工作台的“手outs”标签中添加线索道具。</p>
+          <p class="eyebrow">线索道具</p>
+          <h3 class="section-title">当前案件还没有线索道具</h3>
+          <p class="muted-copy">你可以在案件工作台的“线索道具”标签中添加线索道具。</p>
         </section>
       `;
       return;
@@ -1260,8 +1260,8 @@
                 <div><strong>场景效果</strong><span>${handout.effect}</span></div>
               </div>
               <div class="handout-preview">
-                <p class="eyebrow">Preview</p>
-                <div class="handout-paper">${handout.contentText || "这里会显示手outs正文预览。"}</div>
+                <p class="eyebrow">预览</p>
+                <div class="handout-paper">${handout.contentText || "这里会显示线索道具正文预览。"}</div>
               </div>
             </article>`
           )
