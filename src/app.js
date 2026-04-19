@@ -51,6 +51,7 @@
         atmosphere: "昏黄吊灯、油墨味和深夜未散的烟雾，空气里残留着急促离开的痕迹。",
         clueNote: "可找到被压在打字机下的港口仓单编号。",
         fallback: "若玩家没搜到，编辑会在紧张时提到记者最近总去六码头。",
+        clueIds: ["ledger-payments"],
         npcIds: ["editor-xu"],
         handoutIds: ["torn-note"],
       },
@@ -63,6 +64,7 @@
         atmosphere: "雾气吞掉远处汽笛声，脚步与海浪回响混杂，仿佛有什么在水下同步呼吸。",
         clueNote: "账簿上的付款对象与仓库登记簿上的假名一致。",
         fallback: "如果没有潜入成功，可从码头苦力口中得知今晚会有秘密装船。",
+        clueIds: ["warehouse-alias"],
         npcIds: ["dock-clerk"],
         handoutIds: ["warehouse-register"],
       },
@@ -75,6 +77,7 @@
         atmosphere: "金属器械冰冷反光，福尔马林味压得人说话也想压低声音。",
         clueNote: "尸体肺部残留并不符合普通溺亡。",
         fallback: "法医若被识破恐惧，会主动请求保护并交出原始记录。",
+        clueIds: ["corroded-lungs"],
         npcIds: ["chen-coroner"],
         handoutIds: ["coroner-report"],
       },
@@ -157,6 +160,8 @@
         type: "纸质线索",
         reveal: "编辑部搜查成功时",
         effect: "让玩家意识到记者不是随意失踪，而是已经接近某个名单。",
+        contentText:
+          "六码头，17号仓。账本不是假的，假的是名字。别相信那个穿深色雨衣的人，他和港口会计是一伙的。",
       },
       {
         id: "coroner-report",
@@ -165,6 +170,8 @@
         type: "医疗档案",
         reveal: "说服或威压法医后",
         effect: "把调查从普通谋杀转向异常仪式与海上活动。",
+        contentText:
+          "肺部存在异常盐晶沉积，呼吸道有细小撕裂。按常理不符合单纯溺亡。死者生前可能在清醒状态下短时间接触高盐水环境。",
       },
       {
         id: "warehouse-register",
@@ -173,6 +180,8 @@
         type: "记录文书",
         reveal: "潜入仓库或贿赂苦力后",
         effect: "建立假名、账簿和仓库的关联。",
+        contentText:
+          "4月17日 夜班入库：木箱三件，登记人“周启仁”。备注：午夜前不得开封，优先装船。",
       },
     ],
     sessionLogs: [
@@ -270,10 +279,12 @@
         atmosphere: "",
         clueNote: "",
         fallback: "",
+        clueIds: [],
         npcIds: [],
         handoutIds: [],
       }).map((scene) => ({
         ...scene,
+        clueIds: Array.isArray(scene.clueIds) ? scene.clueIds : [],
         npcIds: Array.isArray(scene.npcIds) ? scene.npcIds : [],
         handoutIds: Array.isArray(scene.handoutIds) ? scene.handoutIds : [],
       })),
@@ -300,6 +311,7 @@
         type: "",
         reveal: "",
         effect: "",
+        contentText: "",
       }),
       sessionLogs: normalizeEntityList(raw.sessionLogs || seed.sessionLogs, firstCampaignId, "log", {
         createdAt: nowLabel(),
@@ -688,10 +700,12 @@
         { name: "atmosphere", label: "氛围描述", type: "textarea", rows: 3, wide: true },
         { name: "clueNote", label: "关键线索", type: "textarea", rows: 3, wide: true },
         { name: "fallback", label: "补救线索", type: "textarea", rows: 3, wide: true },
+        { name: "clueIds", label: "关联线索", type: "multiselect", optionKey: "clues", optionLabel: "title" },
         { name: "npcIds", label: "关联 NPC", type: "multiselect", optionKey: "npcs", optionLabel: "name" },
         { name: "handoutIds", label: "关联手outs", type: "multiselect", optionKey: "handouts", optionLabel: "title" },
       ],
       renderCard(item, bundle) {
+        const clueTitles = (item.clueIds || []).map((id) => bundle.clues.find((clue) => clue.id === id)?.title).filter(Boolean);
         const npcNames = (item.npcIds || []).map((id) => bundle.npcs.find((npc) => npc.id === id)?.name).filter(Boolean);
         const handoutTitles = (item.handoutIds || [])
           .map((id) => bundle.handouts.find((handout) => handout.id === id)?.title)
@@ -703,6 +717,7 @@
             <div class="key-value compact">
               <div><strong>氛围</strong><span>${item.atmosphere || "未填写"}</span></div>
               <div><strong>线索</strong><span>${item.clueNote || "未填写"}</span></div>
+              <div><strong>关联线索</strong><span>${clueTitles.join(" / ") || "未关联"}</span></div>
               <div><strong>补救</strong><span>${item.fallback || "未填写"}</span></div>
               <div><strong>NPC</strong><span>${npcNames.join(" / ") || "未关联"}</span></div>
               <div><strong>手outs</strong><span>${handoutTitles.join(" / ") || "未关联"}</span></div>
@@ -789,6 +804,7 @@
         { name: "type", label: "类型", type: "input", placeholder: "报纸 / 信件 / 档案" },
         { name: "reveal", label: "揭示时机", type: "textarea", rows: 2, wide: true },
         { name: "effect", label: "作用", type: "textarea", rows: 3, wide: true },
+        { name: "contentText", label: "正文内容", type: "textarea", rows: 8, wide: true },
       ],
       renderCard(item) {
         return `
@@ -797,6 +813,10 @@
             <div class="key-value compact">
               <div><strong>揭示时机</strong><span>${item.reveal || "未填写"}</span></div>
               <div><strong>作用</strong><span>${item.effect || "未填写"}</span></div>
+            </div>
+            <div class="handout-preview">
+              <p class="eyebrow">Preview</p>
+              <div class="handout-paper">${item.contentText || "这里会显示手outs正文预览。"}</div>
             </div>
             <div class="button-row">
               <button class="action-button" data-edit-entity="${item.id}">编辑</button>
@@ -926,6 +946,34 @@
                     )
                     .join("")
                 : `<article class="issue-item"><strong>结构正常</strong><span class="small-copy">当前案件已有场景、线索和基本补救路径，可以继续细化细节。</span></article>`
+            }
+          </div>
+        </article>
+        <article class="card">
+          <p class="eyebrow">Scene Flow</p>
+          <h3 class="section-title">场景与线索关联</h3>
+          <div class="issue-list">
+            ${
+              bundle.scenes.length
+                ? bundle.scenes
+                    .map((scene) => {
+                      const linkedClues = (scene.clueIds || [])
+                        .map((id) => bundle.clues.find((clue) => clue.id === id)?.title)
+                        .filter(Boolean);
+                      return `
+                        <article class="issue-item relation-item">
+                          <strong>${scene.title}</strong>
+                          <span class="small-copy">${scene.summary || "暂无简介"}</span>
+                          <div class="relation-flow">
+                            <span class="relation-node">${scene.title}</span>
+                            <span class="relation-arrow">-></span>
+                            <span class="relation-target">${linkedClues.join(" / ") || "未关联线索"}</span>
+                          </div>
+                        </article>
+                      `;
+                    })
+                    .join("")
+                : `<article class="issue-item"><strong>暂无关系图</strong><span class="small-copy">先添加场景和线索，再在场景编辑器中勾选关联线索。</span></article>`
             }
           </div>
         </article>
@@ -1211,7 +1259,10 @@
                 <div><strong>触发条件</strong><span>${handout.reveal}</span></div>
                 <div><strong>场景效果</strong><span>${handout.effect}</span></div>
               </div>
-              <button class="action-button" style="margin-top: 14px;">在跑团模式中展示</button>
+              <div class="handout-preview">
+                <p class="eyebrow">Preview</p>
+                <div class="handout-paper">${handout.contentText || "这里会显示手outs正文预览。"}</div>
+              </div>
             </article>`
           )
           .join("")}

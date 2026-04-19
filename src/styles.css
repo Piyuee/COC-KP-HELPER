@@ -463,6 +463,30 @@ select {
   margin-bottom: 6px;
 }
 
+.relation-item {
+  gap: 10px;
+  display: grid;
+}
+
+.relation-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.relation-node,
+.relation-target {
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: #f2ebe2;
+}
+
+.relation-arrow {
+  color: var(--muted);
+  font-weight: 700;
+}
+
 .two-col {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -641,6 +665,36 @@ select {
   border-radius: 14px;
   padding: 12px 14px;
   background: #fffdfa;
+}
+
+.handout-preview {
+  margin-top: 16px;
+}
+
+.handout-paper {
+  margin-top: 8px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(181, 144, 79, 0.22);
+  background:
+    linear-gradient(180deg, rgba(255, 252, 245, 0.96), rgba(247, 239, 225, 0.96)),
+    repeating-linear-gradient(
+      180deg,
+      transparent,
+      transparent 26px,
+      rgba(31, 27, 24, 0.05) 26px,
+      rgba(31, 27, 24, 0.05) 27px
+    );
+  color: #36281d;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  min-height: 110px;
+  font-family:
+    "Iowan Old Style",
+    "Baskerville",
+    "Songti SC",
+    "STSong",
+    serif;
 }
 
 .quick-status-head {
