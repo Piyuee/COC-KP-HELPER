@@ -2181,14 +2181,21 @@
           <h3 class="section-title">COC 7 版 KP 高频速查</h3>
           <p class="muted-copy">这里不是完整规则书，而是一页开团时最容易卡住的高频判断提示。优先帮助你快速决策和维持节奏。</p>
           <div class="chip-row">
-            ${data.reference.map((section) => `<span class="chip">${section.section}</span>`).join("")}
+            ${data.reference
+              .map(
+                (section, index) => `
+                <button type="button" class="chip reference-chip" data-reference-jump="ref-section-${index}">
+                  ${section.section}
+                </button>`
+              )
+              .join("")}
           </div>
         </section>
         <div class="reference-groups">
           ${data.reference
             .map(
-              (section) => `
-              <section class="card reference-group">
+              (section, index) => `
+              <section class="card reference-group" id="ref-section-${index}">
                 <p class="eyebrow">${section.eyebrow}</p>
                 <h3 class="section-title">${section.section}</h3>
                 <div class="reference-item-list">
@@ -2208,6 +2215,21 @@
         </div>
       </div>
     `;
+
+    root.querySelectorAll("[data-reference-jump]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const target = root.querySelector(`#${button.dataset.referenceJump}`);
+        if (!target) return;
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        target.classList.remove("flash-target");
+        window.requestAnimationFrame(() => {
+          target.classList.add("flash-target");
+        });
+        window.setTimeout(() => {
+          target.classList.remove("flash-target");
+        }, 1400);
+      });
+    });
   }
 
   function upsertCampaign(payload, campaignId) {
