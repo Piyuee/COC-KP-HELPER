@@ -1,4 +1,4 @@
-export function renderSearchResults({ root, query, campaign, npcs, clues, handouts }) {
+export function renderSearchResults({ root, query, campaign, npcs, clues, clueProps }) {
   root.querySelectorAll(".search-results").forEach((el) => el.remove());
 
   const normalizedQuery = query.trim().toLowerCase();
@@ -7,7 +7,7 @@ export function renderSearchResults({ root, query, campaign, npcs, clues, handou
   const searchable = [
     ...npcs.map((npc) => ({ type: "NPC", title: npc.name, body: `${npc.role} · ${npc.publicInfo}` })),
     ...clues.map((clue) => ({ type: "线索", title: clue.title, body: `${clue.source} · ${clue.content}` })),
-    ...handouts.map((handout) => ({ type: "线索道具", title: handout.title, body: `${handout.type} · ${handout.effect}` })),
+    ...clueProps.map((clueProp) => ({ type: "线索道具", title: clueProp.title, body: `${clueProp.type} · ${clueProp.effect}` })),
     ...(campaign ? [{ type: "案件", title: campaign.title, body: campaign.pitch }] : []),
   ].filter((item) => `${item.title} ${item.body}`.toLowerCase().includes(normalizedQuery));
 

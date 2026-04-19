@@ -1,12 +1,16 @@
 (function () {
   const STORAGE_KEY = "coc-kp-helper-data-v1";
+  const LEGACY_KEYS = {
+    clueProps: "handouts",
+    cluePropIds: "handoutIds",
+  };
 
   const PAGE_TITLES = {
     dashboard: "概览",
     campaigns: "案件库",
     workspace: "案件工作台",
     running: "跑团模式",
-    handouts: "线索道具库",
+    clueProps: "线索道具库",
     reference: "规则速查",
   };
 
@@ -53,7 +57,7 @@
         fallback: "若玩家没搜到，编辑会在紧张时提到记者最近总去六码头。",
         clueIds: ["ledger-payments"],
         npcIds: ["editor-xu"],
-        handoutIds: ["torn-note"],
+        cluePropIds: ["torn-note"],
       },
       {
         id: "dock-six",
@@ -66,7 +70,7 @@
         fallback: "如果没有潜入成功，可从码头苦力口中得知今晚会有秘密装船。",
         clueIds: ["warehouse-alias"],
         npcIds: ["dock-clerk"],
-        handoutIds: ["warehouse-register"],
+        cluePropIds: ["warehouse-register"],
       },
       {
         id: "forensic-room",
@@ -79,7 +83,7 @@
         fallback: "法医若被识破恐惧，会主动请求保护并交出原始记录。",
         clueIds: ["corroded-lungs"],
         npcIds: ["chen-coroner"],
-        handoutIds: ["coroner-report"],
+        cluePropIds: ["coroner-report"],
       },
     ],
     clues: [
@@ -152,7 +156,7 @@
         clue: "若被逼入绝境，会泄露装船时间。",
       },
     ],
-    handouts: [
+    clueProps: [
       {
         id: "torn-note",
         campaignId: "misty-ledger",
@@ -281,12 +285,16 @@
         fallback: "",
         clueIds: [],
         npcIds: [],
-        handoutIds: [],
+        cluePropIds: [],
       }).map((scene) => ({
         ...scene,
         clueIds: Array.isArray(scene.clueIds) ? scene.clueIds : [],
         npcIds: Array.isArray(scene.npcIds) ? scene.npcIds : [],
-        handoutIds: Array.isArray(scene.handoutIds) ? scene.handoutIds : [],
+        cluePropIds: Array.isArray(scene.cluePropIds)
+          ? scene.cluePropIds
+          : Array.isArray(scene[LEGACY_KEYS.cluePropIds])
+          ? scene[LEGACY_KEYS.cluePropIds]
+          : [],
       })),
       clues: normalizeEntityList(raw.clues || seed.clues, firstCampaignId, "clue", {
         title: "",
@@ -306,7 +314,7 @@
         motivation: "",
         clue: "",
       }),
-      handouts: normalizeEntityList(raw.handouts || seed.handouts, firstCampaignId, "handout", {
+      clueProps: normalizeEntityList(raw.clueProps || raw[LEGACY_KEYS.clueProps] || seed.clueProps, firstCampaignId, "clueProp", {
         title: "",
         type: "",
         reveal: "",
@@ -341,7 +349,7 @@
         scenes: data.scenes,
         clues: data.clues,
         npcs: data.npcs,
-        handouts: data.handouts,
+        clueProps: data.clueProps,
         sessionLogs: data.sessionLogs,
       })
     );
@@ -358,7 +366,7 @@
       scenes: data.scenes.filter((item) => item.campaignId === targetCampaignId),
       clues: data.clues.filter((item) => item.campaignId === targetCampaignId),
       npcs: data.npcs.filter((item) => item.campaignId === targetCampaignId),
-      handouts: data.handouts.filter((item) => item.campaignId === targetCampaignId),
+      clueProps: data.clueProps.filter((item) => item.campaignId === targetCampaignId),
       sessionLogs: data.sessionLogs
         .filter((item) => item.campaignId === targetCampaignId)
         .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)),
@@ -389,7 +397,7 @@
         campaigns: document.getElementById("page-campaigns"),
         workspace: document.getElementById("page-workspace"),
         running: document.getElementById("page-running"),
-        handouts: document.getElementById("page-handouts"),
+        clueProps: document.getElementById("page-clue-props"),
         reference: document.getElementById("page-reference"),
       },
     };
@@ -455,7 +463,7 @@
     return issues.slice(0, 6);
   }
 
-  function renderSearchResults(root, campaign, npcs, clues, handouts) {
+  function renderSearchResults(root, campaign, npcs, clues, clueProps) {
     root.querySelectorAll(".search-results").forEach((el) => el.remove());
 
     const normalizedQuery = state.searchQuery.trim().toLowerCase();
@@ -464,7 +472,7 @@
     const searchable = [
       ...npcs.map((npc) => ({ type: "NPC", title: npc.name, body: `${npc.role} · ${npc.publicInfo}` })),
       ...clues.map((clue) => ({ type: "线索", title: clue.title, body: `${clue.source} · ${clue.content}` })),
-      ...handouts.map((handout) => ({ type: "线索道具", title: handout.title, body: `${handout.type} · ${handout.effect}` })),
+      ...clueProps.map((clueProp) => ({ type: "线索道具", title: clueProp.title, body: `${clueProp.type} · ${clueProp.effect}` })),
       ...(campaign ? [{ type: "案件", title: campaign.title, body: campaign.pitch }] : []),
     ].filter((item) => `${item.title} ${item.body}`.toLowerCase().includes(normalizedQuery));
 
@@ -702,13 +710,13 @@
         { name: "fallback", label: "补救线索", type: "textarea", rows: 3, wide: true },
         { name: "clueIds", label: "关联线索", type: "multiselect", optionKey: "clues", optionLabel: "title" },
         { name: "npcIds", label: "关联 NPC", type: "multiselect", optionKey: "npcs", optionLabel: "name" },
-        { name: "handoutIds", label: "关联线索道具", type: "multiselect", optionKey: "handouts", optionLabel: "title" },
+        { name: "cluePropIds", label: "关联线索道具", type: "multiselect", optionKey: "clueProps", optionLabel: "title" },
       ],
       renderCard(item, bundle) {
         const clueTitles = (item.clueIds || []).map((id) => bundle.clues.find((clue) => clue.id === id)?.title).filter(Boolean);
         const npcNames = (item.npcIds || []).map((id) => bundle.npcs.find((npc) => npc.id === id)?.name).filter(Boolean);
-        const handoutTitles = (item.handoutIds || [])
-          .map((id) => bundle.handouts.find((handout) => handout.id === id)?.title)
+        const cluePropTitles = (item.cluePropIds || [])
+          .map((id) => bundle.clueProps.find((clueProp) => clueProp.id === id)?.title)
           .filter(Boolean);
         return `
           <article class="scene-card">
@@ -720,7 +728,7 @@
               <div><strong>关联线索</strong><span>${clueTitles.join(" / ") || "未关联"}</span></div>
               <div><strong>补救</strong><span>${item.fallback || "未填写"}</span></div>
               <div><strong>NPC</strong><span>${npcNames.join(" / ") || "未关联"}</span></div>
-              <div><strong>线索道具</strong><span>${handoutTitles.join(" / ") || "未关联"}</span></div>
+              <div><strong>线索道具</strong><span>${cluePropTitles.join(" / ") || "未关联"}</span></div>
             </div>
             <div class="button-row">
               <button class="action-button" data-edit-entity="${item.id}">编辑</button>
@@ -796,9 +804,9 @@
         `;
       },
     },
-    handouts: {
+    clueProps: {
       title: "线索道具",
-      collectionKey: "handouts",
+      collectionKey: "clueProps",
       fields: [
         { name: "title", label: "标题", type: "input", required: true },
         { name: "type", label: "类型", type: "input", placeholder: "报纸 / 信件 / 档案" },
@@ -808,15 +816,15 @@
       ],
       renderCard(item) {
         return `
-          <article class="handout-card">
+          <article class="clue-prop-card">
             <header><div><p class="eyebrow">${item.type || "线索道具"}</p><h3>${item.title}</h3></div></header>
             <div class="key-value compact">
               <div><strong>揭示时机</strong><span>${item.reveal || "未填写"}</span></div>
               <div><strong>作用</strong><span>${item.effect || "未填写"}</span></div>
             </div>
-            <div class="handout-preview">
-              <p class="eyebrow">Preview</p>
-              <div class="handout-paper">${item.contentText || "这里会显示线索道具正文预览。"}</div>
+            <div class="clue-prop-preview">
+              <p class="eyebrow">预览</p>
+              <div class="clue-prop-paper">${item.contentText || "这里会显示线索道具正文预览。"}</div>
             </div>
             <div class="button-row">
               <button class="action-button" data-edit-entity="${item.id}">编辑</button>
@@ -1024,7 +1032,7 @@
           <button class="tab-button ${state.workspaceTab === "scenes" ? "active" : ""}" data-tab="scenes">场景</button>
           <button class="tab-button ${state.workspaceTab === "clues" ? "active" : ""}" data-tab="clues">线索</button>
           <button class="tab-button ${state.workspaceTab === "npcs" ? "active" : ""}" data-tab="npcs">NPC</button>
-          <button class="tab-button ${state.workspaceTab === "handouts" ? "active" : ""}" data-tab="handouts">线索道具</button>
+          <button class="tab-button ${state.workspaceTab === "clueProps" ? "active" : ""}" data-tab="clueProps">线索道具</button>
         </div>
         <div class="workspace-columns">
           <section><div class="list-stack">${listMarkup}</div></section>
@@ -1233,8 +1241,8 @@
     });
   }
 
-  function renderHandoutsLibrary(root, handouts) {
-    if (!handouts.length) {
+  function renderCluePropsLibrary(root, clueProps) {
+    if (!clueProps.length) {
       root.innerHTML = `
         <section class="card empty-state">
           <p class="eyebrow">线索道具</p>
@@ -1247,21 +1255,21 @@
 
     root.innerHTML = `
       <div class="grid cols-3">
-        ${handouts
+        ${clueProps
           .map(
-            (handout) => `
-            <article class="card handout-card">
+            (clueProp) => `
+            <article class="card clue-prop-card">
               <header>
-                <div><p class="eyebrow">${handout.type}</p><h3>${handout.title}</h3></div>
+                <div><p class="eyebrow">${clueProp.type}</p><h3>${clueProp.title}</h3></div>
                 <span class="pill warning">待展示</span>
               </header>
               <div class="key-value">
-                <div><strong>触发条件</strong><span>${handout.reveal}</span></div>
-                <div><strong>场景效果</strong><span>${handout.effect}</span></div>
+                <div><strong>触发条件</strong><span>${clueProp.reveal}</span></div>
+                <div><strong>场景效果</strong><span>${clueProp.effect}</span></div>
               </div>
-              <div class="handout-preview">
+              <div class="clue-prop-preview">
                 <p class="eyebrow">预览</p>
-                <div class="handout-paper">${handout.contentText || "这里会显示线索道具正文预览。"}</div>
+                <div class="clue-prop-paper">${clueProp.contentText || "这里会显示线索道具正文预览。"}</div>
               </div>
             </article>`
           )
@@ -1318,7 +1326,7 @@
     data.scenes = data.scenes.filter((item) => item.campaignId !== campaignId);
     data.clues = data.clues.filter((item) => item.campaignId !== campaignId);
     data.npcs = data.npcs.filter((item) => item.campaignId !== campaignId);
-    data.handouts = data.handouts.filter((item) => item.campaignId !== campaignId);
+    data.clueProps = data.clueProps.filter((item) => item.campaignId !== campaignId);
     data.sessionLogs = data.sessionLogs.filter((item) => item.campaignId !== campaignId);
     state.currentCampaignId = data.campaigns[0] ? data.campaigns[0].id : null;
     state.editingCampaignId = null;
@@ -1332,7 +1340,7 @@
     const collection = data[collectionName];
     const defaults =
       entityType === "scenes"
-        ? { npcIds: [], handoutIds: [] }
+        ? { clueIds: [], npcIds: [], cluePropIds: [] }
         : entityType === "clues"
         ? { status: "未获得" }
         : {};
@@ -1360,9 +1368,9 @@
         scene.npcIds = (scene.npcIds || []).filter((id) => id !== entityId);
       });
     }
-    if (entityType === "handouts") {
+    if (entityType === "clueProps") {
       data.scenes.forEach((scene) => {
-        scene.handoutIds = (scene.handoutIds || []).filter((id) => id !== entityId);
+        scene.cluePropIds = (scene.cluePropIds || []).filter((id) => id !== entityId);
       });
     }
     if (entityType === "scenes") {
@@ -1413,8 +1421,8 @@
         ? "clues"
         : state.workspaceTab === "npcs"
         ? "npcs"
-        : state.workspaceTab === "handouts"
-        ? "handouts"
+        : state.workspaceTab === "clueProps"
+        ? "clueProps"
         : null;
     const editingEntity = entityType && state.editingEntityId ? getEntity(entityType, state.editingEntityId) : null;
 
@@ -1423,9 +1431,9 @@
     renderCampaigns(bindings.pages.campaigns, editingCampaign);
     renderWorkspace(bindings.pages.workspace, campaign, bundle, editingEntity);
     renderRunning(bindings.pages.running, campaign, bundle);
-    renderHandoutsLibrary(bindings.pages.handouts, bundle.handouts);
+    renderCluePropsLibrary(bindings.pages.clueProps, bundle.clueProps);
     renderReference(bindings.pages.reference);
-    renderSearchResults(bindings.pages[state.currentPage], campaign, bundle.npcs, bundle.clues, bundle.handouts);
+    renderSearchResults(bindings.pages[state.currentPage], campaign, bundle.npcs, bundle.clues, bundle.clueProps);
   }
 
   bindings.navButtons.forEach((button) => {
@@ -1458,7 +1466,7 @@
           scenes: data.scenes,
           clues: data.clues,
           npcs: data.npcs,
-          handouts: data.handouts,
+          clueProps: data.clueProps,
           sessionLogs: data.sessionLogs,
         },
         null,
@@ -1484,7 +1492,7 @@
       data.scenes = normalized.scenes;
       data.clues = normalized.clues;
       data.npcs = normalized.npcs;
-      data.handouts = normalized.handouts;
+      data.clueProps = normalized.clueProps;
       data.sessionLogs = normalized.sessionLogs;
       data.reference = normalized.reference;
       state.currentCampaignId = data.campaigns[0] ? data.campaigns[0].id : null;
@@ -1510,7 +1518,7 @@
     data.scenes = restored.scenes;
     data.clues = restored.clues;
     data.npcs = restored.npcs;
-    data.handouts = restored.handouts;
+    data.clueProps = restored.clueProps;
     data.sessionLogs = restored.sessionLogs;
     data.reference = restored.reference;
     state.currentCampaignId = restored.campaigns[0].id;

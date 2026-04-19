@@ -95,14 +95,14 @@ NPC 表
 - `created_at`
 - `updated_at`
 
-### handouts
+### clue_props
 
 线索道具 表
 
 - `id`
 - `campaign_id`
 - `title`
-- `handout_type`
+- `clue_prop_type`
 - `content_text`
 - `asset_url`
 - `style_template`
@@ -158,12 +158,12 @@ NPC 表
 - `scene_id`
 - `location_id`
 
-### scene_handouts
+### scene_clue_props
 
 场景与线索道具关联表
 
 - `scene_id`
-- `handout_id`
+- `clue_prop_id`
 
 ### scene_transitions
 
@@ -182,11 +182,11 @@ NPC 与线索关联表
 - `clue_id`
 - `reveal_condition`
 
-### handout_clues
+### clue_prop_clues
 
 线索道具与线索关联表
 
-- `handout_id`
+- `clue_prop_id`
 - `clue_id`
 
 ### session_clues
@@ -280,7 +280,7 @@ NPC 关系表
 说明
 
 - Start with plain text or markdown fields for all long-form content.
-- Do not over-model handout rendering in the MVP.
+- Do not over-model clue prop rendering in the MVP.
 - Keep clue fallback support explicit even if it duplicates some information.
 
 - 第一版所有长文本字段都先使用纯文本或 Markdown。

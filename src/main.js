@@ -6,7 +6,7 @@ import { renderDashboard } from "./ui/pages/dashboard.js";
 import { renderCampaigns } from "./ui/pages/campaigns.js";
 import { renderWorkspace } from "./ui/pages/workspace.js";
 import { renderRunning } from "./ui/pages/running.js";
-import { renderHandoutsLibrary } from "./ui/pages/handouts.js";
+import { renderCluePropsLibrary } from "./ui/pages/clue-props.js";
 import { renderReference } from "./ui/pages/reference.js";
 
 const store = createStore(mockData);
@@ -16,7 +16,7 @@ const workspaceEntityMap = {
   scenes: "scenes",
   clues: "clues",
   npcs: "npcs",
-  handouts: "handouts",
+  clueProps: "clueProps",
 };
 
 function downloadTextFile(filename, content) {
@@ -138,9 +138,9 @@ function renderApp() {
     },
   });
 
-  renderHandoutsLibrary({
-    root: bindings.pages.handouts,
-    handouts: bundle.handouts,
+  renderCluePropsLibrary({
+    root: bindings.pages.clueProps,
+    clueProps: bundle.clueProps,
   });
 
   renderReference({
@@ -154,7 +154,7 @@ function renderApp() {
     campaign,
     npcs: bundle.npcs,
     clues: bundle.clues,
-    handouts: bundle.handouts,
+    clueProps: bundle.clueProps,
   });
 }
 

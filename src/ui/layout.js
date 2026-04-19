@@ -19,7 +19,7 @@ export function createLayoutBindings() {
       campaigns: document.getElementById("page-campaigns"),
       workspace: document.getElementById("page-workspace"),
       running: document.getElementById("page-running"),
-      handouts: document.getElementById("page-handouts"),
+      clueProps: document.getElementById("page-clue-props"),
       reference: document.getElementById("page-reference"),
     },
   };

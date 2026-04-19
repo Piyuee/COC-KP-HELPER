@@ -1,5 +1,5 @@
-export function renderHandoutsLibrary({ root, handouts }) {
-  if (!handouts.length) {
+export function renderCluePropsLibrary({ root, clueProps }) {
+  if (!clueProps.length) {
     root.innerHTML = `
       <section class="card empty-state">
         <p class="eyebrow">线索道具</p>
@@ -12,20 +12,20 @@ export function renderHandoutsLibrary({ root, handouts }) {
 
   root.innerHTML = `
     <div class="grid cols-3">
-      ${handouts
+      ${clueProps
         .map(
-          (handout) => `
-          <article class="card handout-card">
+          (clueProp) => `
+          <article class="card clue-prop-card">
             <header>
               <div>
-                <p class="eyebrow">${handout.type}</p>
-                <h3>${handout.title}</h3>
+                <p class="eyebrow">${clueProp.type}</p>
+                <h3>${clueProp.title}</h3>
               </div>
               <span class="pill warning">待展示</span>
             </header>
             <div class="key-value">
-              <div><strong>触发条件</strong><span>${handout.reveal}</span></div>
-              <div><strong>场景效果</strong><span>${handout.effect}</span></div>
+              <div><strong>触发条件</strong><span>${clueProp.reveal}</span></div>
+              <div><strong>场景效果</strong><span>${clueProp.effect}</span></div>
             </div>
             <button class="action-button" style="margin-top: 14px;">在跑团模式中展示</button>
           </article>`

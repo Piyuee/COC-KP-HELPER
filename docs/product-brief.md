@@ -31,7 +31,7 @@ The product is not just a note-taking tool. Its core purpose is to help a Keeper
 2. Run at the table
    Information should be retrievable in seconds during play.
 3. COC-specific support
-   Handouts, sanity pressure, secrets, horror pacing, and fallback clues should be first-class concepts.
+   Clue props, sanity pressure, secrets, horror pacing, and fallback clues should be first-class concepts.
 4. Clear split between truth and player knowledge
    The Keeper needs to track both what is true and what players currently believe.
 
@@ -63,7 +63,7 @@ The product is not just a note-taking tool. Its core purpose is to help a Keeper
 - Notes are scattered and hard to search mid-session
 - Critical clues can be missed and stall the investigation
 - NPC motives and relationships are difficult to keep consistent
-- Handouts are hard to organize and reveal at the right time
+- Clue props are hard to organize and reveal at the right time
 - Session notes do not always translate into clean next-session prep
 
 - 笔记分散，跑团中难以快速检索
@@ -102,7 +102,7 @@ The product is not just a note-taking tool. Its core purpose is to help a Keeper
 - NPCs
 - Locations
 - Timelines
-- Handouts
+- Clue Props
 - Truth and Endings
 
 - 总览

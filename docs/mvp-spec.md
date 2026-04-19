@@ -13,7 +13,7 @@ The MVP should support:
 MVP 需要支持：
 
 - authoring a campaign
-- defining scenes, NPCs, clues, locations, and handouts
+- defining scenes, NPCs, clues, locations, and clue props
 - tracking what happened in each session
 - checking clue health and fallback coverage
 - using a focused session-running view during play
@@ -44,7 +44,7 @@ P0 功能
 
 - Create scene cards
 - Record atmosphere, entry conditions, failure consequences, and fallback clue notes
-- Link scenes to NPCs, locations, handouts, and downstream scenes
+- Link scenes to NPCs, locations, clue props, and downstream scenes
 
 - 创建场景卡片
 - 记录氛围、进入条件、失败后果和备用线索说明
@@ -74,13 +74,13 @@ NPC 管理
 - 存储公开信息、秘密、动机、弱点和态度
 - 将 NPC 与场景和线索关联
 
-### Handout Management
+### Clue Prop Management
 
 线索道具管理
 
-- Create or upload handouts
+- Create or upload clue props
 - Tag by type
-- Bind handouts to clues and reveal conditions
+- Bind clue props to clues and reveal conditions
 
 - 创建或上传线索道具
 - 按类型打标签
@@ -118,7 +118,7 @@ NPC 管理
 
 搜索
 
-- Search campaigns, scenes, NPCs, locations, clues, and handouts
+- Search campaigns, scenes, NPCs, locations, clues, and clue props
 
 - 搜索案件、场景、NPC、地点、线索和线索道具
 
@@ -159,7 +159,7 @@ MVP 暂不包含
 1. Create a campaign.
 2. Add the core truth and ending states.
 3. Create scenes and link them together.
-4. Add NPCs, locations, clues, and handouts.
+4. Add NPCs, locations, clues, and clue props.
 5. Open Running Mode during a session.
 6. Log events and update clue status live.
 7. Review open threads after the session.

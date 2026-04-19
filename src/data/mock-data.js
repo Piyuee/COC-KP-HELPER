@@ -40,7 +40,7 @@ export const mockData = {
       clueNote: "可找到被压在打字机下的港口仓单编号。",
       fallback: "若玩家没搜到，编辑会在紧张时提到记者最近总去六码头。",
       npcIds: ["editor-xu"],
-      handoutIds: ["torn-note"],
+      cluePropIds: ["torn-note"],
     },
     {
       id: "dock-six",
@@ -52,7 +52,7 @@ export const mockData = {
       clueNote: "账簿上的付款对象与仓库登记簿上的假名一致。",
       fallback: "如果没有潜入成功，可从码头苦力口中得知今晚会有秘密装船。",
       npcIds: ["dock-clerk"],
-      handoutIds: ["warehouse-register"],
+      cluePropIds: ["warehouse-register"],
     },
     {
       id: "forensic-room",
@@ -64,7 +64,7 @@ export const mockData = {
       clueNote: "尸体肺部残留并不符合普通溺亡。",
       fallback: "法医若被识破恐惧，会主动请求保护并交出原始记录。",
       npcIds: ["chen-coroner"],
-      handoutIds: ["coroner-report"],
+      cluePropIds: ["coroner-report"],
     },
   ],
   clues: [
@@ -137,7 +137,7 @@ export const mockData = {
       clue: "若被逼入绝境，会泄露装船时间。",
     },
   ],
-  handouts: [
+  clueProps: [
     {
       id: "torn-note",
       campaignId: "misty-ledger",

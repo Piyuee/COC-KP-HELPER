@@ -333,7 +333,7 @@ select {
 .scene-card header,
 .clue-card header,
 .npc-card header,
-.handout-card header {
+.clue-prop-card header {
   display: flex;
   justify-content: space-between;
   gap: 10px;
@@ -343,7 +343,7 @@ select {
 .scene-card h3,
 .clue-card h3,
 .npc-card h3,
-.handout-card h3 {
+.clue-prop-card h3 {
   font-size: 1.05rem;
   margin-bottom: 8px;
 }
@@ -404,7 +404,7 @@ select {
 .scene-card,
 .clue-card,
 .npc-card,
-.handout-card,
+.clue-prop-card,
 .mini-card,
 .log-card {
   background: #fffdfa;
@@ -667,11 +667,11 @@ select {
   background: #fffdfa;
 }
 
-.handout-preview {
+.clue-prop-preview {
   margin-top: 16px;
 }
 
-.handout-paper {
+.clue-prop-paper {
   margin-top: 8px;
   padding: 16px;
   border-radius: 16px;

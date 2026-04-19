@@ -13,7 +13,7 @@ The repository now includes a usable static frontend that supports local editing
 COC KP Helper is designed to help Keepers:
 
 - build investigation scenarios with coherent clue structures
-- track scenes, NPCs, locations, handouts, and secrets
+- track scenes, NPCs, locations, clue props, and secrets
 - respond quickly to player actions during live sessions
 - avoid stalled investigations by preparing fallback clue paths
 - keep session notes, timelines, and unresolved threads organized
@@ -54,7 +54,7 @@ COC KP Helper 的目标是帮助守秘人：
 - Scene cards
 - Clue graph
 - NPC management
-- Handout management
+- Clue prop management
 - Session running mode
 - Search across core entities
 
@@ -70,7 +70,7 @@ COC KP Helper 的目标是帮助守秘人：
 
 1. Open `index.html` directly in a browser, or serve the repo with a simple static server.
 2. Create a campaign from the top-right `新建案件` button.
-3. Use the workspace tabs to maintain scenes, clues, NPCs, and handouts.
+3. Use the workspace tabs to maintain scenes, clues, NPCs, and clue props.
 4. Use `跑团模式` to append session notes during play.
 5. Export your data regularly as JSON.
 

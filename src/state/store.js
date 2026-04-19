@@ -1,11 +1,15 @@
 const STORAGE_KEY = "coc-kp-helper-data-v1";
+const LEGACY_KEYS = {
+  clueProps: "handouts",
+  cluePropIds: "handoutIds",
+};
 
 export const PAGE_TITLES = {
   dashboard: "概览",
   campaigns: "案件库",
   workspace: "案件工作台",
   running: "跑团模式",
-  handouts: "线索道具库",
+  clueProps: "线索道具库",
   reference: "规则速查",
 };
 
@@ -37,12 +41,20 @@ function loadPersistedData(seedData) {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return clone(seedData);
     const parsed = JSON.parse(raw);
+    const normalizedScenes = (parsed.scenes || seedData.scenes).map((scene) => ({
+      ...scene,
+      cluePropIds: Array.isArray(scene.cluePropIds)
+        ? scene.cluePropIds
+        : Array.isArray(scene[LEGACY_KEYS.cluePropIds])
+        ? scene[LEGACY_KEYS.cluePropIds]
+        : [],
+    }));
     return {
       campaigns: parsed.campaigns || clone(seedData.campaigns),
-      scenes: parsed.scenes || clone(seedData.scenes),
+      scenes: normalizedScenes,
       clues: parsed.clues || clone(seedData.clues),
       npcs: parsed.npcs || clone(seedData.npcs),
-      handouts: parsed.handouts || clone(seedData.handouts),
+      clueProps: parsed.clueProps || parsed[LEGACY_KEYS.clueProps] || clone(seedData.clueProps),
       sessionLogs: parsed.sessionLogs || clone(seedData.sessionLogs),
       reference: clone(seedData.reference),
     };
@@ -57,7 +69,7 @@ function savePersistedData(data) {
     scenes: data.scenes,
     clues: data.clues,
     npcs: data.npcs,
-    handouts: data.handouts,
+    clueProps: data.clueProps,
     sessionLogs: data.sessionLogs,
   };
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
@@ -93,7 +105,7 @@ export function createStore(seedData) {
       scenes: data.scenes.filter((item) => item.campaignId === campaignId),
       clues: data.clues.filter((item) => item.campaignId === campaignId),
       npcs: data.npcs.filter((item) => item.campaignId === campaignId),
-      handouts: data.handouts.filter((item) => item.campaignId === campaignId),
+      clueProps: data.clueProps.filter((item) => item.campaignId === campaignId),
       sessionLogs: data.sessionLogs
         .filter((item) => item.campaignId === campaignId)
         .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)),
@@ -129,7 +141,7 @@ export function createStore(seedData) {
     data.scenes = data.scenes.filter((item) => item.campaignId !== campaignId);
     data.clues = data.clues.filter((item) => item.campaignId !== campaignId);
     data.npcs = data.npcs.filter((item) => item.campaignId !== campaignId);
-    data.handouts = data.handouts.filter((item) => item.campaignId !== campaignId);
+    data.clueProps = data.clueProps.filter((item) => item.campaignId !== campaignId);
     data.sessionLogs = data.sessionLogs.filter((item) => item.campaignId !== campaignId);
     state.currentCampaignId = data.campaigns[0]?.id || null;
     state.editingCampaignId = null;
@@ -168,9 +180,9 @@ export function createStore(seedData) {
         scene.npcIds = (scene.npcIds || []).filter((id) => id !== entityId);
       });
     }
-    if (entityType === "handouts") {
+    if (entityType === "clueProps") {
       data.scenes.forEach((scene) => {
-        scene.handoutIds = (scene.handoutIds || []).filter((id) => id !== entityId);
+        scene.cluePropIds = (scene.cluePropIds || []).filter((id) => id !== entityId);
       });
     }
     if (entityType === "scenes") {
@@ -206,7 +218,7 @@ export function createStore(seedData) {
         scenes: data.scenes,
         clues: data.clues,
         npcs: data.npcs,
-        handouts: data.handouts,
+        clueProps: data.clueProps,
         sessionLogs: data.sessionLogs,
       },
       null,
@@ -217,10 +229,17 @@ export function createStore(seedData) {
   function importData(raw) {
     const parsed = JSON.parse(raw);
     data.campaigns = parsed.campaigns || [];
-    data.scenes = parsed.scenes || [];
+    data.scenes = (parsed.scenes || []).map((scene) => ({
+      ...scene,
+      cluePropIds: Array.isArray(scene.cluePropIds)
+        ? scene.cluePropIds
+        : Array.isArray(scene[LEGACY_KEYS.cluePropIds])
+        ? scene[LEGACY_KEYS.cluePropIds]
+        : [],
+    }));
     data.clues = parsed.clues || [];
     data.npcs = parsed.npcs || [];
-    data.handouts = parsed.handouts || [];
+    data.clueProps = parsed.clueProps || parsed[LEGACY_KEYS.clueProps] || [];
     data.sessionLogs = parsed.sessionLogs || [];
     state.currentCampaignId = data.campaigns[0]?.id || null;
     state.currentPage = data.campaigns.length ? "dashboard" : "campaigns";
@@ -236,7 +255,7 @@ export function createStore(seedData) {
     data.scenes = restored.scenes;
     data.clues = restored.clues;
     data.npcs = restored.npcs;
-    data.handouts = restored.handouts;
+    data.clueProps = restored.clueProps;
     data.sessionLogs = restored.sessionLogs;
     state.currentCampaignId = restored.campaigns[0]?.id || null;
     state.currentPage = "dashboard";
