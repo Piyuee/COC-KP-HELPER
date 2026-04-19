@@ -734,6 +734,29 @@ select {
   margin-bottom: 8px;
 }
 
+.reference-layout,
+.reference-groups,
+.reference-item-list {
+  display: grid;
+  gap: 18px;
+}
+
+.reference-item-list {
+  gap: 12px;
+}
+
+.reference-item {
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(31, 27, 24, 0.1);
+  background: #fffdfa;
+}
+
+.reference-item strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
 .button-row {
   display: flex;
   gap: 10px;
