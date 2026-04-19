@@ -219,6 +219,7 @@
     editingCampaignId: null,
     editingEntityId: null,
     draftLogText: "",
+    flashMessage: null,
   };
 
   function clone(value) {
@@ -366,6 +367,7 @@
       importButton: document.getElementById("import-button"),
       resetButton: document.getElementById("reset-button"),
       importFileInput: document.getElementById("import-file-input"),
+      feedbackBanner: document.getElementById("feedback-banner"),
       sidebarCampaignTitle: document.getElementById("sidebar-campaign-title"),
       sidebarCampaignSummary: document.getElementById("sidebar-campaign-summary"),
       sidebarOpenClues: document.getElementById("sidebar-open-clues"),
@@ -397,6 +399,48 @@
     Object.entries(bindings.pages).forEach(([key, element]) => {
       element.classList.toggle("active", key === state.currentPage);
     });
+
+    if (state.flashMessage) {
+      bindings.feedbackBanner.textContent = state.flashMessage.text;
+      bindings.feedbackBanner.className = `feedback-banner ${state.flashMessage.type || ""}`.trim();
+    } else {
+      bindings.feedbackBanner.textContent = "";
+      bindings.feedbackBanner.className = "feedback-banner hidden";
+    }
+  }
+
+  function setFlash(text, type) {
+    state.flashMessage = { text: text, type: type || "success" };
+    if (setFlash._timer) clearTimeout(setFlash._timer);
+    setFlash._timer = setTimeout(() => {
+      state.flashMessage = null;
+      renderApp();
+    }, 2600);
+  }
+
+  function getHealthCheck(campaign, bundle) {
+    if (!campaign) return [];
+    const issues = [];
+    if (!bundle.scenes.length) {
+      issues.push({ title: "没有场景", body: "建议至少建立 2 到 3 个核心调查场景，避免案件结构过空。" });
+    }
+    if (!bundle.clues.length) {
+      issues.push({ title: "没有线索", body: "当前案件还没有任何线索，玩家会缺少推进调查的抓手。" });
+    }
+    if (!campaign.currentSceneId) {
+      issues.push({ title: "未指定当前场景", body: "跑团模式更依赖当前场景，建议在总览里先指定一个。" });
+    }
+    bundle.clues
+      .filter((item) => item.type.indexOf("关键") !== -1 && !String(item.fallback || "").trim())
+      .forEach((item) => {
+        issues.push({ title: `关键线索缺少补救：${item.title}`, body: "如果玩家错过这条线索，目前没有明确的备用来源说明。" });
+      });
+    bundle.scenes
+      .filter((item) => !String(item.clueNote || "").trim())
+      .forEach((item) => {
+        issues.push({ title: `场景缺少线索：${item.title}`, body: "这个场景还没有记录关键线索，可能会沦为纯过场。" });
+      });
+    return issues.slice(0, 6);
   }
 
   function renderSearchResults(root, campaign, npcs, clues, handouts) {
@@ -444,6 +488,7 @@
     const obtainedClues = bundle.clues.filter((item) => item.status === "已获得").length;
     const unresolvedThreads = bundle.clues.filter((item) => item.status !== "已获得").length;
     const currentScene = bundle.scenes.find((scene) => scene.id === campaign.currentSceneId);
+    const healthIssues = getHealthCheck(campaign, bundle);
 
     root.innerHTML = `
       <div class="grid cols-4">
@@ -483,7 +528,7 @@
         </section>
         <section class="card">
           <p class="eyebrow">Keeper Focus</p>
-          <h3 class="section-title">当前使用提示</h3>
+          <h3 class="section-title">健康检查与当前提示</h3>
           <div class="timeline">
             <div class="timeline-item">
               <strong>当前场景</strong>
@@ -500,6 +545,21 @@
               <strong>最近记录</strong>
               <p class="list-copy">${bundle.sessionLogs[0] ? bundle.sessionLogs[0].text : "还没有跑团记录。可去“跑团模式”快速追加。"}</p>
             </div>
+          </div>
+          <div class="issue-list" style="margin-top: 16px;">
+            ${
+              healthIssues.length
+                ? healthIssues
+                    .map(
+                      (issue) => `
+                      <article class="issue-item">
+                        <strong>${issue.title}</strong>
+                        <span class="small-copy">${issue.body}</span>
+                      </article>`
+                    )
+                    .join("")
+                : `<article class="issue-item"><strong>健康检查通过</strong><span class="small-copy">当前案件已经具备基础的跑团结构，没有发现明显的断线风险。</span></article>`
+            }
           </div>
         </section>
       </div>
@@ -826,6 +886,7 @@
 
     const config = entityConfig[state.workspaceTab];
     const collection = config ? bundle[config.collectionKey] : [];
+    const healthIssues = getHealthCheck(campaign, bundle);
     const draft =
       editingEntity ||
       (state.workspaceTab === "overview"
@@ -847,6 +908,25 @@
             <div><strong>玩家误判</strong><span>${campaign.playerMisread || "未填写"}</span></div>
             <div><strong>下一步建议</strong><span>${campaign.nextSuggestion || "未填写"}</span></div>
             <div><strong>当前场景</strong><span>${bundle.scenes.find((scene) => scene.id === campaign.currentSceneId)?.title || "未指定"}</span></div>
+          </div>
+        </article>
+        <article class="card">
+          <p class="eyebrow">Health Check</p>
+          <h3 class="section-title">调查健康检查</h3>
+          <div class="issue-list">
+            ${
+              healthIssues.length
+                ? healthIssues
+                    .map(
+                      (issue) => `
+                      <article class="issue-item">
+                        <strong>${issue.title}</strong>
+                        <span class="small-copy">${issue.body}</span>
+                      </article>`
+                    )
+                    .join("")
+                : `<article class="issue-item"><strong>结构正常</strong><span class="small-copy">当前案件已有场景、线索和基本补救路径，可以继续细化细节。</span></article>`
+            }
           </div>
         </article>
       `
@@ -979,6 +1059,20 @@
           <section class="card">
             <p class="eyebrow">Running Mode</p>
             <h3 class="section-title">当前场景：${currentScene ? currentScene.title : "未指定"}</h3>
+            <div class="entity-form single-column" style="margin-bottom: 14px;">
+              <label class="span-2">
+                <span>快速切换当前场景</span>
+                <select id="running-scene-select" name="runningSceneId">
+                  <option value="">未指定</option>
+                  ${bundle.scenes
+                    .map(
+                      (scene) =>
+                        `<option value="${scene.id}" ${campaign.currentSceneId === scene.id ? "selected" : ""}>${scene.title}</option>`
+                    )
+                    .join("")}
+                </select>
+              </label>
+            </div>
             <div class="key-value">
               <div><strong>场景简介</strong><span>${currentScene ? currentScene.summary : "请在案件总览中选择当前场景。"}</span></div>
               <div><strong>氛围</strong><span>${currentScene ? currentScene.atmosphere : "未填写"}</span></div>
@@ -998,6 +1092,38 @@
             </form>
           </section>
         </div>
+        <section class="card">
+          <p class="eyebrow">Clue Control</p>
+          <h3 class="section-title">线索快速状态切换</h3>
+          <div class="quick-status-list">
+            ${
+              bundle.clues.length
+                ? bundle.clues
+                    .map(
+                      (clue) => `
+                      <article class="quick-status-item">
+                        <div class="quick-status-head">
+                          <div>
+                            <strong>${clue.title}</strong>
+                            <p class="small-copy">${clue.source || "未填写来源"}</p>
+                          </div>
+                          <span class="pill ${clue.status === "已获得" ? "warning" : clue.status === "未获得" ? "danger" : ""}">${clue.status}</span>
+                        </div>
+                        <div class="status-switcher">
+                          ${["未获得", "进行中", "已获得"]
+                            .map(
+                              (status) =>
+                                `<button type="button" class="${clue.status === status ? "active" : ""}" data-clue-id="${clue.id}" data-clue-status="${status}">${status}</button>`
+                            )
+                            .join("")}
+                        </div>
+                      </article>`
+                    )
+                    .join("")
+                : `<article class="quick-status-item"><strong>还没有线索</strong><p class="small-copy">先去案件工作台补充线索，再回来做现场切换。</p></article>`
+            }
+          </div>
+        </section>
         <section class="card">
           <p class="eyebrow">Session Log</p>
           <h3 class="section-title">本场动态记录</h3>
@@ -1028,6 +1154,12 @@
       state.draftLogText = event.target.value;
     });
 
+    root.querySelector("#running-scene-select").addEventListener("change", (event) => {
+      upsertCampaign({ currentSceneId: event.target.value }, campaign.id);
+      setFlash("已更新当前场景。", "success");
+      renderApp();
+    });
+
     root.querySelector("#running-log-form").addEventListener("submit", (event) => {
       event.preventDefault();
       addSessionLog(new FormData(event.currentTarget).get("logText") || "");
@@ -1039,6 +1171,15 @@
         if (!window.confirm("确定删除这条跑团记录吗？")) return;
         data.sessionLogs = data.sessionLogs.filter((item) => item.id !== button.dataset.deleteLog);
         persist();
+        setFlash("已删除跑团记录。", "warning");
+        renderApp();
+      });
+    });
+
+    root.querySelectorAll("[data-clue-id][data-clue-status]").forEach((button) => {
+      button.addEventListener("click", () => {
+        updateClueStatus(button.dataset.clueId, button.dataset.clueStatus);
+        setFlash(`线索状态已更新为“${button.dataset.clueStatus}”。`, "success");
         renderApp();
       });
     });
@@ -1099,6 +1240,7 @@
     if (campaignId) {
       const target = data.campaigns.find((item) => item.id === campaignId);
       Object.assign(target, payload);
+      setFlash("案件信息已保存。", "success");
     } else {
       const created = normalizeCampaign({
         id: makeId("campaign"),
@@ -1107,8 +1249,16 @@
       data.campaigns.unshift(created);
       state.currentCampaignId = created.id;
       state.currentPage = "workspace";
+      setFlash(`已创建案件「${created.title}」。`, "success");
     }
     state.editingCampaignId = null;
+    persist();
+  }
+
+  function updateClueStatus(clueId, status) {
+    const clue = data.clues.find((item) => item.id === clueId);
+    if (!clue) return;
+    clue.status = status;
     persist();
   }
 
@@ -1123,6 +1273,7 @@
     state.editingCampaignId = null;
     state.editingEntityId = null;
     persist();
+    setFlash("案件已删除。", "warning");
   }
 
   function upsertEntity(entityType, payload, entityId) {
@@ -1148,6 +1299,7 @@
     }
     state.editingEntityId = null;
     persist();
+    setFlash(entityId ? "内容已保存。" : "已新增内容。", "success");
   }
 
   function removeEntity(entityType, entityId) {
@@ -1169,6 +1321,7 @@
     }
     state.editingEntityId = null;
     persist();
+    setFlash("内容已删除。", "warning");
   }
 
   function addSessionLog(text) {
@@ -1181,6 +1334,7 @@
     });
     state.draftLogText = "";
     persist();
+    setFlash("已写入新的跑团记录。", "success");
   }
 
   function downloadTextFile(filename, content) {
@@ -1260,6 +1414,8 @@
         2
       )
     );
+    setFlash("数据已导出为 JSON 文件。", "success");
+    renderApp();
   });
 
   bindings.importButton.addEventListener("click", () => {
@@ -1288,6 +1444,7 @@
       state.searchQuery = "";
       state.draftLogText = "";
       persist();
+      setFlash("数据导入成功。", "success");
       renderApp();
     } catch (error) {
       window.alert("导入失败：文件格式不正确。");
@@ -1313,6 +1470,7 @@
     state.searchQuery = "";
     state.draftLogText = "";
     persist();
+    setFlash("已恢复示例数据。", "warning");
     renderApp();
   });
 
