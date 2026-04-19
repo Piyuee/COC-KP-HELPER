@@ -419,6 +419,21 @@ select {
   gap: 12px;
 }
 
+.scene-description-groups,
+.scene-description-group {
+  display: grid;
+  gap: 14px;
+}
+
+.scene-description-group-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed rgba(31, 27, 24, 0.12);
+}
+
 .scene-description-card.compact {
   padding: 16px;
 }

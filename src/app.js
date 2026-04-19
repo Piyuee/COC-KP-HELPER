@@ -198,6 +198,7 @@
         campaignId: "misty-ledger",
         title: "六码头外侧的夜雾",
         sceneId: "dock-six",
+        sortOrder: 1,
         tag: "开场描写",
         usageNote: "玩家第一次靠近码头外围时朗读，用来压低节奏、制造水下未知感。",
         content:
@@ -208,6 +209,7 @@
         campaignId: "misty-ledger",
         title: "法医室的冷白灯",
         sceneId: "forensic-room",
+        sortOrder: 1,
         tag: "压迫感",
         usageNote: "玩家进入法医室时可直接朗读，也适合在摊牌前重复一句加强气氛。",
         content:
@@ -356,10 +358,14 @@
       sceneDescriptions: normalizeEntityList(raw.sceneDescriptions || seed.sceneDescriptions, firstCampaignId, "sceneDescription", {
         title: "",
         sceneId: "",
+        sortOrder: 1,
         tag: "",
         usageNote: "",
         content: "",
-      }),
+      }).map((entry) => ({
+        ...entry,
+        sortOrder: Number.isFinite(Number(entry.sortOrder)) ? Number(entry.sortOrder) : 1,
+      })),
       sessionLogs: normalizeEntityList(raw.sessionLogs || seed.sessionLogs, firstCampaignId, "log", {
         createdAt: nowLabel(),
         text: "",
@@ -547,6 +553,28 @@
         </div>
       </div>
     `;
+  }
+
+  function getSortedSceneDescriptions(items) {
+    return [...items].sort((a, b) => {
+      const orderDiff = (Number(a.sortOrder) || 0) - (Number(b.sortOrder) || 0);
+      if (orderDiff !== 0) return orderDiff;
+      return String(a.title || "").localeCompare(String(b.title || ""), "zh-CN");
+    });
+  }
+
+  function getMaxSceneDescriptionOrder(campaignId, sceneId) {
+    return data.sceneDescriptions
+      .filter((item) => item.campaignId === campaignId && (item.sceneId || "") === (sceneId || ""))
+      .reduce((max, item) => Math.max(max, Number(item.sortOrder) || 0), 0);
+  }
+
+  function renumberSceneDescriptionGroup(campaignId, sceneId) {
+    getSortedSceneDescriptions(
+      data.sceneDescriptions.filter((item) => item.campaignId === campaignId && (item.sceneId || "") === (sceneId || ""))
+    ).forEach((item, index) => {
+      item.sortOrder = index + 1;
+    });
   }
 
   function getHealthCheck(campaign, bundle) {
@@ -1693,7 +1721,7 @@
     const currentScene = bundle.scenes.find((scene) => scene.id === campaign.currentSceneId);
     const activeClues = bundle.clues.filter((item) => item.status !== "已获得");
     const currentSceneDescriptions = currentScene
-      ? bundle.sceneDescriptions.filter((item) => item.sceneId === currentScene.id)
+      ? getSortedSceneDescriptions(bundle.sceneDescriptions.filter((item) => item.sceneId === currentScene.id))
       : [];
 
     root.innerHTML = `
@@ -1907,40 +1935,73 @@
     const draft = editingDescription || {
       title: "",
       sceneId: "",
+      sortOrder: getMaxSceneDescriptionOrder(campaign.id, ""),
       tag: "",
       usageNote: "",
       content: "",
     };
+
+    const groupedDescriptions = [
+      ...bundle.scenes.map((scene) => ({
+        key: scene.id,
+        title: scene.title,
+        eyebrow: scene.type || "场景",
+        items: getSortedSceneDescriptions(bundle.sceneDescriptions.filter((entry) => entry.sceneId === scene.id)),
+      })),
+      {
+        key: "unbound",
+        title: "未绑定场景",
+        eyebrow: "Loose Notes",
+        items: getSortedSceneDescriptions(bundle.sceneDescriptions.filter((entry) => !entry.sceneId)),
+      },
+    ].filter((group) => group.items.length);
 
     root.innerHTML = `
       <div class="workspace-columns">
         <section class="card">
           <p class="eyebrow">Scene Description Library</p>
           <h3 class="section-title">${campaign.title} 的备用描述</h3>
-          <div class="list-stack">
+          <div class="scene-description-groups">
             ${
               bundle.sceneDescriptions.length
-                ? bundle.sceneDescriptions
-                    .map((entry) => {
-                      const sceneTitle = bundle.scenes.find((scene) => scene.id === entry.sceneId)?.title || "未绑定场景";
-                      return `
-                        <article class="scene-description-card">
-                          <header>
-                            <div>
-                              <p class="eyebrow">${entry.tag || "场景描述"}</p>
-                              <h3>${entry.title}</h3>
-                            </div>
-                            <span class="pill">${sceneTitle}</span>
-                          </header>
-                          <p class="muted-copy">${entry.usageNote || "未填写使用说明。"}</p>
-                          <div class="scene-description-body">${entry.content || "未填写正文。"}</div>
-                          <div class="button-row">
-                            <button class="action-button" data-edit-scene-description="${entry.id}">编辑</button>
-                            <button class="action-button danger" data-delete-scene-description="${entry.id}">删除</button>
+                ? groupedDescriptions
+                    .map(
+                      (group) => `
+                      <section class="scene-description-group">
+                        <div class="scene-description-group-head">
+                          <div>
+                            <p class="eyebrow">${group.eyebrow}</p>
+                            <h3>${group.title}</h3>
                           </div>
-                        </article>
-                      `;
-                    })
+                          <span class="pill">${group.items.length}</span>
+                        </div>
+                        <div class="list-stack">
+                          ${group.items
+                            .map(
+                              (entry) => `
+                              <article class="scene-description-card">
+                                <header>
+                                  <div>
+                                    <p class="eyebrow">${entry.tag || "场景描述"} · 顺位 ${entry.sortOrder || 1}</p>
+                                    <h3>${entry.title}</h3>
+                                  </div>
+                                  <span class="pill">${group.title}</span>
+                                </header>
+                                <p class="muted-copy">${entry.usageNote || "未填写使用说明。"}</p>
+                                <div class="scene-description-body">${entry.content || "未填写正文。"}</div>
+                                <div class="button-row">
+                                  <button class="action-button" data-move-scene-description="${entry.id}" data-direction="up">上移</button>
+                                  <button class="action-button" data-move-scene-description="${entry.id}" data-direction="down">下移</button>
+                                  <button class="action-button" data-edit-scene-description="${entry.id}">编辑</button>
+                                  <button class="action-button danger" data-delete-scene-description="${entry.id}">删除</button>
+                                </div>
+                              </article>
+                            `
+                            )
+                            .join("")}
+                        </div>
+                      </section>`
+                    )
                     .join("")
                 : `<article class="mini-card empty-state"><p class="muted-copy">还没有备用场景描述，右侧表单可以直接新增。</p></article>`
             }
@@ -1960,6 +2021,7 @@
                   .join("")}
               </select>
             </label>
+            <label><span>顺位</span><input name="sortOrder" type="number" min="1" value="${draft.sortOrder || 1}" /></label>
             <label><span>标签</span><input name="tag" value="${draft.tag || ""}" placeholder="开场描写 / 压迫感 / 转场说明" /></label>
             <label><span>使用说明</span><input name="usageNote" value="${draft.usageNote || ""}" placeholder="什么时候朗读，或者用于什么效果" /></label>
             <label class="span-2">
@@ -1993,6 +2055,13 @@
       button.addEventListener("click", () => {
         if (!window.confirm("确定删除这条场景描述吗？")) return;
         removeSceneDescription(button.dataset.deleteSceneDescription);
+        renderApp();
+      });
+    });
+
+    root.querySelectorAll("[data-move-scene-description]").forEach((button) => {
+      button.addEventListener("click", () => {
+        moveSceneDescription(button.dataset.moveSceneDescription, button.dataset.direction);
         renderApp();
       });
     });
@@ -2119,17 +2188,29 @@
   }
 
   function upsertSceneDescription(payload, descriptionId) {
+    const normalizedPayload = {
+      ...payload,
+      sceneId: payload.sceneId || "",
+      sortOrder: Math.max(1, Number(payload.sortOrder) || 1),
+    };
+
     if (descriptionId) {
       const target = data.sceneDescriptions.find((item) => item.id === descriptionId);
       if (!target) return;
-      Object.assign(target, payload);
+      const previousSceneId = target.sceneId || "";
+      Object.assign(target, normalizedPayload);
+      renumberSceneDescriptionGroup(state.currentCampaignId, previousSceneId);
+      renumberSceneDescriptionGroup(state.currentCampaignId, target.sceneId || "");
       setFlash("场景描述已保存。", "success");
     } else {
+      const nextOrder = normalizedPayload.sortOrder || getMaxSceneDescriptionOrder(state.currentCampaignId, normalizedPayload.sceneId) + 1;
       data.sceneDescriptions.unshift({
         id: makeId("sceneDescription"),
         campaignId: state.currentCampaignId,
-        ...payload,
+        ...normalizedPayload,
+        sortOrder: nextOrder,
       });
+      renumberSceneDescriptionGroup(state.currentCampaignId, normalizedPayload.sceneId || "");
       setFlash("已新增场景描述。", "success");
     }
     state.editingSceneDescriptionId = null;
@@ -2137,10 +2218,32 @@
   }
 
   function removeSceneDescription(descriptionId) {
+    const target = data.sceneDescriptions.find((item) => item.id === descriptionId);
     data.sceneDescriptions = data.sceneDescriptions.filter((item) => item.id !== descriptionId);
+    if (target) renumberSceneDescriptionGroup(state.currentCampaignId, target.sceneId || "");
     state.editingSceneDescriptionId = null;
     persist();
     setFlash("场景描述已删除。", "warning");
+  }
+
+  function moveSceneDescription(descriptionId, direction) {
+    const target = data.sceneDescriptions.find((item) => item.id === descriptionId);
+    if (!target) return;
+    const group = getSortedSceneDescriptions(
+      data.sceneDescriptions.filter((item) => item.campaignId === state.currentCampaignId && (item.sceneId || "") === (target.sceneId || ""))
+    );
+    const currentIndex = group.findIndex((item) => item.id === descriptionId);
+    if (currentIndex === -1) return;
+    const swapIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    if (swapIndex < 0 || swapIndex >= group.length) return;
+    const current = group[currentIndex];
+    const other = group[swapIndex];
+    const tempOrder = current.sortOrder;
+    current.sortOrder = other.sortOrder;
+    other.sortOrder = tempOrder;
+    renumberSceneDescriptionGroup(state.currentCampaignId, target.sceneId || "");
+    persist();
+    setFlash(`已调整场景描述「${target.title}」的顺序。`, "success");
   }
 
   function addSessionLog(text) {
