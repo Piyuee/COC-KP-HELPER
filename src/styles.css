@@ -405,12 +405,46 @@ select {
 .clue-card,
 .npc-card,
 .clue-prop-card,
+.scene-description-card,
 .mini-card,
 .log-card {
   background: #fffdfa;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   padding: 18px;
+}
+
+.scene-description-card {
+  display: grid;
+  gap: 12px;
+}
+
+.scene-description-card.compact {
+  padding: 16px;
+}
+
+.scene-description-card header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: start;
+}
+
+.scene-description-card h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.scene-description-body {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 252, 245, 0.96), rgba(246, 239, 227, 0.96)),
+    radial-gradient(circle at top right, rgba(181, 144, 79, 0.14), transparent 26%);
+  border: 1px solid rgba(181, 144, 79, 0.18);
+  line-height: 1.8;
+  white-space: pre-wrap;
+  color: #36281d;
 }
 
 .timeline {

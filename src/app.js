@@ -10,6 +10,7 @@
     campaigns: "案件库",
     workspace: "案件工作台",
     running: "跑团模式",
+    sceneDescriptions: "场景描述库",
     clueProps: "线索道具库",
     reference: "规则速查",
   };
@@ -191,6 +192,28 @@
           "4月17日 夜班入库：木箱三件，登记人“周启仁”。备注：午夜前不得开封，优先装船。",
       },
     ],
+    sceneDescriptions: [
+      {
+        id: "desc-dock-fog",
+        campaignId: "misty-ledger",
+        title: "六码头外侧的夜雾",
+        sceneId: "dock-six",
+        tag: "开场描写",
+        usageNote: "玩家第一次靠近码头外围时朗读，用来压低节奏、制造水下未知感。",
+        content:
+          "雾从江面缓慢推上来，把仓库、吊臂和远处的灯火一层层吞没。你们只能听见铁链轻轻碰撞的声音，还有某种像呼吸一样的潮汐节奏，正从六码头深处一下一下传出来。",
+      },
+      {
+        id: "desc-coroner-room",
+        campaignId: "misty-ledger",
+        title: "法医室的冷白灯",
+        sceneId: "forensic-room",
+        tag: "压迫感",
+        usageNote: "玩家进入法医室时可直接朗读，也适合在摊牌前重复一句加强气氛。",
+        content:
+          "冷白色的灯把每一件金属器械都照得过分清楚，像是故意提醒你们这里每一道切口都曾真实发生。空气里有一股洗不掉的福尔马林味，让人本能地想把声音压低。",
+      },
+    ],
     sessionLogs: [
       {
         id: "log-1",
@@ -234,6 +257,7 @@
     searchQuery: "",
     editingCampaignId: null,
     editingEntityId: null,
+    editingSceneDescriptionId: null,
     draftLogText: "",
     flashMessage: null,
     relationFocus: null,
@@ -329,6 +353,13 @@
         ...clueProp,
         template: inferCluePropTemplate(clueProp),
       })),
+      sceneDescriptions: normalizeEntityList(raw.sceneDescriptions || seed.sceneDescriptions, firstCampaignId, "sceneDescription", {
+        title: "",
+        sceneId: "",
+        tag: "",
+        usageNote: "",
+        content: "",
+      }),
       sessionLogs: normalizeEntityList(raw.sessionLogs || seed.sessionLogs, firstCampaignId, "log", {
         createdAt: nowLabel(),
         text: "",
@@ -358,6 +389,7 @@
         clues: data.clues,
         npcs: data.npcs,
         clueProps: data.clueProps,
+        sceneDescriptions: data.sceneDescriptions,
         sessionLogs: data.sessionLogs,
       })
     );
@@ -375,6 +407,7 @@
       clues: data.clues.filter((item) => item.campaignId === targetCampaignId),
       npcs: data.npcs.filter((item) => item.campaignId === targetCampaignId),
       clueProps: data.clueProps.filter((item) => item.campaignId === targetCampaignId),
+      sceneDescriptions: data.sceneDescriptions.filter((item) => item.campaignId === targetCampaignId),
       sessionLogs: data.sessionLogs
         .filter((item) => item.campaignId === targetCampaignId)
         .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)),
@@ -405,6 +438,7 @@
         campaigns: document.getElementById("page-campaigns"),
         workspace: document.getElementById("page-workspace"),
         running: document.getElementById("page-running"),
+        sceneDescriptions: document.getElementById("page-scene-descriptions"),
         clueProps: document.getElementById("page-clue-props"),
         reference: document.getElementById("page-reference"),
       },
@@ -1001,7 +1035,7 @@
     `;
   }
 
-  function renderSearchResults(root, campaign, npcs, clues, clueProps) {
+  function renderSearchResults(root, campaign, npcs, clues, clueProps, sceneDescriptions) {
     root.querySelectorAll(".search-results").forEach((el) => el.remove());
 
     const normalizedQuery = state.searchQuery.trim().toLowerCase();
@@ -1011,6 +1045,7 @@
       ...npcs.map((npc) => ({ type: "NPC", title: npc.name, body: `${npc.role} · ${npc.publicInfo}` })),
       ...clues.map((clue) => ({ type: "线索", title: clue.title, body: `${clue.source} · ${clue.content}` })),
       ...clueProps.map((clueProp) => ({ type: "线索道具", title: clueProp.title, body: `${clueProp.type} · ${clueProp.effect}` })),
+      ...sceneDescriptions.map((entry) => ({ type: "场景描述", title: entry.title, body: `${entry.tag} · ${entry.content}` })),
       ...(campaign ? [{ type: "案件", title: campaign.title, body: campaign.pitch }] : []),
     ].filter((item) => `${item.title} ${item.body}`.toLowerCase().includes(normalizedQuery));
 
@@ -1657,6 +1692,9 @@
 
     const currentScene = bundle.scenes.find((scene) => scene.id === campaign.currentSceneId);
     const activeClues = bundle.clues.filter((item) => item.status !== "已获得");
+    const currentSceneDescriptions = currentScene
+      ? bundle.sceneDescriptions.filter((item) => item.sceneId === currentScene.id)
+      : [];
 
     root.innerHTML = `
       <div class="running-grid">
@@ -1751,6 +1789,31 @@
             }
           </div>
         </section>
+        <section class="card">
+          <p class="eyebrow">Read-Aloud Notes</p>
+          <h3 class="section-title">当前场景备用描述</h3>
+          <div class="list-stack">
+            ${
+              currentSceneDescriptions.length
+                ? currentSceneDescriptions
+                    .map(
+                      (entry) => `
+                      <article class="scene-description-card compact">
+                        <header>
+                          <div>
+                            <p class="eyebrow">${entry.tag || "场景描述"}</p>
+                            <h3>${entry.title}</h3>
+                          </div>
+                        </header>
+                        <p class="muted-copy">${entry.usageNote || "未填写使用时机。"}</p>
+                        <div class="scene-description-body">${entry.content || "未填写正文。"}</div>
+                      </article>`
+                    )
+                    .join("")
+                : `<article class="log-card"><p class="muted-copy">当前场景还没有备用描述。你可以去“场景描述库”提前准备。</p></article>`
+            }
+          </div>
+        </section>
       </div>
     `;
 
@@ -1825,6 +1888,124 @@
     `;
   }
 
+  function renderSceneDescriptions(root, campaign, bundle) {
+    if (!campaign) {
+      root.innerHTML = `
+        <section class="card empty-state">
+          <p class="eyebrow">Scene Description Library</p>
+          <h3 class="section-title">还没有案件</h3>
+          <p class="muted-copy">先创建案件，再把备用场景描述整理进来。</p>
+        </section>
+      `;
+      return;
+    }
+
+    const editingDescription = state.editingSceneDescriptionId
+      ? bundle.sceneDescriptions.find((item) => item.id === state.editingSceneDescriptionId) || null
+      : null;
+
+    const draft = editingDescription || {
+      title: "",
+      sceneId: "",
+      tag: "",
+      usageNote: "",
+      content: "",
+    };
+
+    root.innerHTML = `
+      <div class="workspace-columns">
+        <section class="card">
+          <p class="eyebrow">Scene Description Library</p>
+          <h3 class="section-title">${campaign.title} 的备用描述</h3>
+          <div class="list-stack">
+            ${
+              bundle.sceneDescriptions.length
+                ? bundle.sceneDescriptions
+                    .map((entry) => {
+                      const sceneTitle = bundle.scenes.find((scene) => scene.id === entry.sceneId)?.title || "未绑定场景";
+                      return `
+                        <article class="scene-description-card">
+                          <header>
+                            <div>
+                              <p class="eyebrow">${entry.tag || "场景描述"}</p>
+                              <h3>${entry.title}</h3>
+                            </div>
+                            <span class="pill">${sceneTitle}</span>
+                          </header>
+                          <p class="muted-copy">${entry.usageNote || "未填写使用说明。"}</p>
+                          <div class="scene-description-body">${entry.content || "未填写正文。"}</div>
+                          <div class="button-row">
+                            <button class="action-button" data-edit-scene-description="${entry.id}">编辑</button>
+                            <button class="action-button danger" data-delete-scene-description="${entry.id}">删除</button>
+                          </div>
+                        </article>
+                      `;
+                    })
+                    .join("")
+                : `<article class="mini-card empty-state"><p class="muted-copy">还没有备用场景描述，右侧表单可以直接新增。</p></article>`
+            }
+          </div>
+        </section>
+        <section class="card editor-panel">
+          <p class="eyebrow">${editingDescription ? "Edit Description" : "New Description"}</p>
+          <h3 class="section-title">${editingDescription ? "编辑场景描述" : "新增场景描述"}</h3>
+          <form id="scene-description-form" class="entity-form">
+            <label><span>标题</span><input name="title" value="${draft.title || ""}" required /></label>
+            <label>
+              <span>绑定场景</span>
+              <select name="sceneId">
+                <option value="">未绑定</option>
+                ${bundle.scenes
+                  .map((scene) => `<option value="${scene.id}" ${draft.sceneId === scene.id ? "selected" : ""}>${scene.title}</option>`)
+                  .join("")}
+              </select>
+            </label>
+            <label><span>标签</span><input name="tag" value="${draft.tag || ""}" placeholder="开场描写 / 压迫感 / 转场说明" /></label>
+            <label><span>使用说明</span><input name="usageNote" value="${draft.usageNote || ""}" placeholder="什么时候朗读，或者用于什么效果" /></label>
+            <label class="span-2">
+              <span>描述正文</span>
+              <textarea name="content" rows="10" required>${draft.content || ""}</textarea>
+            </label>
+            <div class="button-row span-2">
+              <button type="submit" class="action-button primary">${editingDescription ? "保存修改" : "新增描述"}</button>
+              ${editingDescription ? '<button type="button" id="cancel-scene-description-edit" class="action-button">取消编辑</button>' : ""}
+            </div>
+          </form>
+        </section>
+      </div>
+    `;
+
+    root.querySelector("#scene-description-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const payload = Object.fromEntries(new FormData(event.currentTarget).entries());
+      upsertSceneDescription(payload, state.editingSceneDescriptionId);
+      renderApp();
+    });
+
+    root.querySelectorAll("[data-edit-scene-description]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.editingSceneDescriptionId = button.dataset.editSceneDescription;
+        renderApp();
+      });
+    });
+
+    root.querySelectorAll("[data-delete-scene-description]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (!window.confirm("确定删除这条场景描述吗？")) return;
+        removeSceneDescription(button.dataset.deleteSceneDescription);
+        renderApp();
+      });
+    });
+
+    const cancelButton = root.querySelector("#cancel-scene-description-edit");
+    if (cancelButton) {
+      cancelButton.addEventListener("click", () => {
+        state.editingSceneDescriptionId = null;
+        renderApp();
+      });
+    }
+  }
+
   function renderReference(root) {
     root.innerHTML = `
       <div class="grid cols-3">
@@ -1874,10 +2055,12 @@
     data.clues = data.clues.filter((item) => item.campaignId !== campaignId);
     data.npcs = data.npcs.filter((item) => item.campaignId !== campaignId);
     data.clueProps = data.clueProps.filter((item) => item.campaignId !== campaignId);
+    data.sceneDescriptions = data.sceneDescriptions.filter((item) => item.campaignId !== campaignId);
     data.sessionLogs = data.sessionLogs.filter((item) => item.campaignId !== campaignId);
     state.currentCampaignId = data.campaigns[0] ? data.campaigns[0].id : null;
     state.editingCampaignId = null;
     state.editingEntityId = null;
+    state.editingSceneDescriptionId = null;
     persist();
     setFlash("案件已删除。", "warning");
   }
@@ -1926,10 +2109,38 @@
       data.campaigns.forEach((campaign) => {
         if (campaign.currentSceneId === entityId) campaign.currentSceneId = "";
       });
+      data.sceneDescriptions.forEach((entry) => {
+        if (entry.sceneId === entityId) entry.sceneId = "";
+      });
     }
     state.editingEntityId = null;
     persist();
     setFlash("内容已删除。", "warning");
+  }
+
+  function upsertSceneDescription(payload, descriptionId) {
+    if (descriptionId) {
+      const target = data.sceneDescriptions.find((item) => item.id === descriptionId);
+      if (!target) return;
+      Object.assign(target, payload);
+      setFlash("场景描述已保存。", "success");
+    } else {
+      data.sceneDescriptions.unshift({
+        id: makeId("sceneDescription"),
+        campaignId: state.currentCampaignId,
+        ...payload,
+      });
+      setFlash("已新增场景描述。", "success");
+    }
+    state.editingSceneDescriptionId = null;
+    persist();
+  }
+
+  function removeSceneDescription(descriptionId) {
+    data.sceneDescriptions = data.sceneDescriptions.filter((item) => item.id !== descriptionId);
+    state.editingSceneDescriptionId = null;
+    persist();
+    setFlash("场景描述已删除。", "warning");
   }
 
   function addSessionLog(text) {
@@ -1980,9 +2191,10 @@
     renderCampaigns(bindings.pages.campaigns, editingCampaign);
     renderWorkspace(bindings.pages.workspace, campaign, bundle, editingEntity);
     renderRunning(bindings.pages.running, campaign, bundle);
+    renderSceneDescriptions(bindings.pages.sceneDescriptions, campaign, bundle);
     renderCluePropsLibrary(bindings.pages.clueProps, bundle.clueProps);
     renderReference(bindings.pages.reference);
-    renderSearchResults(bindings.pages[state.currentPage], campaign, bundle.npcs, bundle.clues, bundle.clueProps);
+    renderSearchResults(bindings.pages[state.currentPage], campaign, bundle.npcs, bundle.clues, bundle.clueProps, bundle.sceneDescriptions);
   }
 
   bindings.navButtons.forEach((button) => {
@@ -1990,6 +2202,7 @@
       state.currentPage = button.dataset.page;
       state.editingCampaignId = null;
       state.editingEntityId = null;
+      state.editingSceneDescriptionId = null;
       renderApp();
     });
   });
@@ -2003,6 +2216,7 @@
     state.currentPage = "campaigns";
     state.editingCampaignId = null;
     state.editingEntityId = null;
+    state.editingSceneDescriptionId = null;
     renderApp();
   });
 
@@ -2016,6 +2230,7 @@
           clues: data.clues,
           npcs: data.npcs,
           clueProps: data.clueProps,
+          sceneDescriptions: data.sceneDescriptions,
           sessionLogs: data.sessionLogs,
         },
         null,
@@ -2042,6 +2257,7 @@
       data.clues = normalized.clues;
       data.npcs = normalized.npcs;
       data.clueProps = normalized.clueProps;
+      data.sceneDescriptions = normalized.sceneDescriptions;
       data.sessionLogs = normalized.sessionLogs;
       data.reference = normalized.reference;
       state.currentCampaignId = data.campaigns[0] ? data.campaigns[0].id : null;
@@ -2049,6 +2265,7 @@
       state.workspaceTab = "overview";
       state.editingCampaignId = null;
       state.editingEntityId = null;
+      state.editingSceneDescriptionId = null;
       state.searchQuery = "";
       state.draftLogText = "";
       persist();
@@ -2068,6 +2285,7 @@
     data.clues = restored.clues;
     data.npcs = restored.npcs;
     data.clueProps = restored.clueProps;
+    data.sceneDescriptions = restored.sceneDescriptions;
     data.sessionLogs = restored.sessionLogs;
     data.reference = restored.reference;
     state.currentCampaignId = restored.campaigns[0].id;
@@ -2075,6 +2293,7 @@
     state.workspaceTab = "overview";
     state.editingCampaignId = null;
     state.editingEntityId = null;
+    state.editingSceneDescriptionId = null;
     state.searchQuery = "";
     state.draftLogText = "";
     persist();
