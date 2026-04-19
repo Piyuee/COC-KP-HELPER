@@ -24,13 +24,19 @@ COC KP Helper 的目标是帮助守秘人：
 
 ## Repository Structure
 
+- `index.html` - static app shell for the first-version UI
+- `src/main.js` - frontend entry and render orchestration
 - `docs/product-brief.md` - product positioning and information architecture
 - `docs/mvp-spec.md` - MVP scope, priorities, and core flows
 - `docs/data-model.md` - initial relational data model proposal
+- `docs/frontend-architecture.md` - frontend structure and refactor notes
 
+- `index.html` - 第一版页面的静态入口
+- `src/main.js` - 前端入口与渲染调度
 - `docs/product-brief.md` - 产品定位与信息架构
 - `docs/mvp-spec.md` - MVP 范围、优先级和核心流程
 - `docs/data-model.md` - 初版关系型数据模型设计
+- `docs/frontend-architecture.md` - 前端结构与重构说明
 
 ## Planned MVP
 
