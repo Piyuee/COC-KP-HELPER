@@ -1,12 +1,20 @@
 # Data Model
 
+数据模型
+
 ## Overview
 
 This document proposes an initial relational data model for the MVP.
 
+这份文档提出了一个适用于 MVP 的初版关系型数据模型。
+
 ## Core Tables
 
+核心数据表
+
 ### campaigns
+
+案件表
 
 - `id`
 - `title`
@@ -20,6 +28,8 @@ This document proposes an initial relational data model for the MVP.
 - `updated_at`
 
 ### scenes
+
+场景表
 
 - `id`
 - `campaign_id`
@@ -36,6 +46,8 @@ This document proposes an initial relational data model for the MVP.
 
 ### locations
 
+地点表
+
 - `id`
 - `campaign_id`
 - `title`
@@ -48,6 +60,8 @@ This document proposes an initial relational data model for the MVP.
 - `updated_at`
 
 ### npcs
+
+NPC 表
 
 - `id`
 - `campaign_id`
@@ -63,6 +77,8 @@ This document proposes an initial relational data model for the MVP.
 - `updated_at`
 
 ### clues
+
+线索表
 
 - `id`
 - `campaign_id`
@@ -81,6 +97,8 @@ This document proposes an initial relational data model for the MVP.
 
 ### handouts
 
+手outs 表
+
 - `id`
 - `campaign_id`
 - `title`
@@ -94,6 +112,8 @@ This document proposes an initial relational data model for the MVP.
 - `updated_at`
 
 ### sessions
+
+场次表
 
 - `id`
 - `campaign_id`
@@ -109,6 +129,8 @@ This document proposes an initial relational data model for the MVP.
 
 ### session_events
 
+场次事件表
+
 - `id`
 - `session_id`
 - `scene_id`
@@ -120,22 +142,32 @@ This document proposes an initial relational data model for the MVP.
 
 ## Join Tables
 
+关联表
+
 ### scene_npcs
+
+场景与 NPC 关联表
 
 - `scene_id`
 - `npc_id`
 
 ### scene_locations
 
+场景与地点关联表
+
 - `scene_id`
 - `location_id`
 
 ### scene_handouts
 
+场景与手outs 关联表
+
 - `scene_id`
 - `handout_id`
 
 ### scene_transitions
+
+场景流转表
 
 - `id`
 - `from_scene_id`
@@ -144,16 +176,22 @@ This document proposes an initial relational data model for the MVP.
 
 ### npc_clues
 
+NPC 与线索关联表
+
 - `npc_id`
 - `clue_id`
 - `reveal_condition`
 
 ### handout_clues
 
+手outs 与线索关联表
+
 - `handout_id`
 - `clue_id`
 
 ### session_clues
+
+场次线索状态表
 
 - `id`
 - `session_id`
@@ -164,6 +202,8 @@ This document proposes an initial relational data model for the MVP.
 
 ### npc_relationships
 
+NPC 关系表
+
 - `id`
 - `campaign_id`
 - `from_npc_id`
@@ -173,7 +213,11 @@ This document proposes an initial relational data model for the MVP.
 
 ## Timeline Support
 
+时间线支持
+
 ### timelines
+
+时间线表
 
 - `id`
 - `campaign_id`
@@ -181,6 +225,8 @@ This document proposes an initial relational data model for the MVP.
 - `title`
 
 ### timeline_events
+
+时间线事件表
 
 - `id`
 - `timeline_id`
@@ -192,13 +238,19 @@ This document proposes an initial relational data model for the MVP.
 
 ## Suggested Enums
 
+建议枚举
+
 ### campaign status
+
+案件状态
 
 - `draft`
 - `active`
 - `archived`
 
 ### scene_type
+
+场景类型
 
 - `investigation`
 - `social`
@@ -209,11 +261,15 @@ This document proposes an initial relational data model for the MVP.
 
 ### session_clue status
 
+场次线索状态
+
 - `available`
 - `obtained`
 - `missed`
 
 ### timeline_type
+
+时间线类型
 
 - `truth`
 - `player_known`
@@ -221,6 +277,12 @@ This document proposes an initial relational data model for the MVP.
 
 ## Notes
 
+说明
+
 - Start with plain text or markdown fields for all long-form content.
 - Do not over-model handout rendering in the MVP.
 - Keep clue fallback support explicit even if it duplicates some information.
+
+- 第一版所有长文本字段都先使用纯文本或 Markdown。
+- MVP 不需要过早把手outs 渲染能力建模得太复杂。
+- 即便会出现一定信息重复，也要把线索的备用来源显式记录下来。
