@@ -468,6 +468,120 @@ select {
   display: grid;
 }
 
+.relation-board {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.relation-browser,
+.relation-detail {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #fffdfa;
+  padding: 16px;
+}
+
+.relation-browser {
+  display: grid;
+  gap: 14px;
+}
+
+.relation-section {
+  display: grid;
+  gap: 10px;
+}
+
+.relation-section-head,
+.relation-detail-head,
+.relation-detail-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.relation-node-grid,
+.relation-group-list {
+  display: grid;
+  gap: 10px;
+}
+
+.relation-node-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.relation-node-button,
+.relation-link {
+  border: 1px solid var(--line);
+  background: #f8f2ea;
+  border-radius: 14px;
+  padding: 12px 14px;
+  cursor: pointer;
+  text-align: left;
+  display: grid;
+  gap: 6px;
+  transition: 160ms ease;
+}
+
+.relation-node-button:hover,
+.relation-link:hover {
+  border-color: rgba(125, 47, 47, 0.26);
+  background: #f3e7db;
+}
+
+.relation-node-button.active {
+  border-color: var(--accent);
+  background: rgba(125, 47, 47, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(125, 47, 47, 0.12);
+}
+
+.relation-node-title,
+.relation-detail-title {
+  font-family:
+    "Iowan Old Style",
+    "Baskerville",
+    "Songti SC",
+    "STSong",
+    serif;
+}
+
+.relation-node-title {
+  font-size: 0.98rem;
+}
+
+.relation-node-meta,
+.relation-count {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.relation-detail {
+  display: grid;
+  gap: 14px;
+}
+
+.relation-detail-title {
+  margin: 4px 0 0;
+  font-size: 1.2rem;
+}
+
+.relation-detail-group {
+  display: grid;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(31, 27, 24, 0.12);
+}
+
+.relation-empty {
+  border: 1px dashed rgba(31, 27, 24, 0.16);
+  border-radius: 14px;
+  padding: 12px 14px;
+  color: var(--muted);
+  background: #fffdfa;
+}
+
 .relation-flow {
   display: flex;
   flex-wrap: wrap;
@@ -741,6 +855,7 @@ select {
   .grid.cols-3,
   .grid.cols-2,
   .workspace-columns,
+  .relation-board,
   .two-col,
   .three-col {
     grid-template-columns: 1fr;
@@ -756,7 +871,8 @@ select {
   }
 
   .entity-form,
-  .checkbox-grid {
+  .checkbox-grid,
+  .relation-node-grid {
     grid-template-columns: 1fr;
   }
 }

@@ -233,6 +233,7 @@
     editingEntityId: null,
     draftLogText: "",
     flashMessage: null,
+    relationFocus: null,
   };
 
   function clone(value) {
@@ -461,6 +462,252 @@
         issues.push({ title: `场景缺少线索：${item.title}`, body: "这个场景还没有记录关键线索，可能会沦为纯过场。" });
       });
     return issues.slice(0, 6);
+  }
+
+  function uniqueById(items) {
+    const seen = new Set();
+    return items.filter((item) => {
+      if (!item || seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
+  }
+
+  function getRelationNodeMeta(type) {
+    return {
+      scene: { title: "场景", eyebrow: "Scene Node", workspaceTab: "scenes" },
+      clue: { title: "线索", eyebrow: "Clue Node", workspaceTab: "clues" },
+      npc: { title: "NPC", eyebrow: "NPC Node", workspaceTab: "npcs" },
+      clueProp: { title: "线索道具", eyebrow: "Prop Node", workspaceTab: "clueProps" },
+    }[type];
+  }
+
+  function getRelationEntity(bundle, focus) {
+    if (!focus) return null;
+    if (focus.type === "scene") return bundle.scenes.find((item) => item.id === focus.id) || null;
+    if (focus.type === "clue") return bundle.clues.find((item) => item.id === focus.id) || null;
+    if (focus.type === "npc") return bundle.npcs.find((item) => item.id === focus.id) || null;
+    if (focus.type === "clueProp") return bundle.clueProps.find((item) => item.id === focus.id) || null;
+    return null;
+  }
+
+  function getRelationSummary(type, entity) {
+    if (!entity) return "";
+    if (type === "scene") return entity.summary || entity.atmosphere || "这个场景还没有补充说明。";
+    if (type === "clue") return entity.content || entity.fallback || "这条线索还没有补充说明。";
+    if (type === "npc") return entity.publicInfo || entity.secret || "这个 NPC 还没有补充说明。";
+    if (type === "clueProp") return entity.effect || entity.contentText || "这个线索道具还没有补充说明。";
+    return "";
+  }
+
+  function getFocusBadge(type, entity) {
+    if (!entity) return "";
+    if (type === "scene") return entity.type || "场景";
+    if (type === "clue") return entity.status || entity.type || "线索";
+    if (type === "npc") return entity.role || "NPC";
+    if (type === "clueProp") return entity.type || "线索道具";
+    return "";
+  }
+
+  function getRelationFocus(bundle, campaign) {
+    const existing = getRelationEntity(bundle, state.relationFocus);
+    if (existing && state.relationFocus) return state.relationFocus;
+    if (campaign?.currentSceneId && bundle.scenes.some((scene) => scene.id === campaign.currentSceneId)) {
+      return { type: "scene", id: campaign.currentSceneId };
+    }
+    if (bundle.scenes[0]) return { type: "scene", id: bundle.scenes[0].id };
+    if (bundle.clues[0]) return { type: "clue", id: bundle.clues[0].id };
+    if (bundle.npcs[0]) return { type: "npc", id: bundle.npcs[0].id };
+    if (bundle.clueProps[0]) return { type: "clueProp", id: bundle.clueProps[0].id };
+    return null;
+  }
+
+  function getRelationGroups(bundle, focus) {
+    const entity = getRelationEntity(bundle, focus);
+    if (!entity) return [];
+
+    let scenes = [];
+    let clues = [];
+    let npcs = [];
+    let clueProps = [];
+
+    if (focus.type === "scene") {
+      scenes = [entity];
+      clues = uniqueById((entity.clueIds || []).map((id) => bundle.clues.find((item) => item.id === id)));
+      npcs = uniqueById((entity.npcIds || []).map((id) => bundle.npcs.find((item) => item.id === id)));
+      clueProps = uniqueById((entity.cluePropIds || []).map((id) => bundle.clueProps.find((item) => item.id === id)));
+    }
+
+    if (focus.type === "clue") {
+      scenes = uniqueById(bundle.scenes.filter((scene) => (scene.clueIds || []).includes(entity.id)));
+      npcs = uniqueById(
+        scenes.flatMap((scene) => (scene.npcIds || []).map((id) => bundle.npcs.find((item) => item.id === id)))
+      );
+      clueProps = uniqueById(
+        scenes.flatMap((scene) => (scene.cluePropIds || []).map((id) => bundle.clueProps.find((item) => item.id === id)))
+      );
+      clues = [entity];
+    }
+
+    if (focus.type === "npc") {
+      scenes = uniqueById(bundle.scenes.filter((scene) => (scene.npcIds || []).includes(entity.id)));
+      clues = uniqueById(
+        scenes.flatMap((scene) => (scene.clueIds || []).map((id) => bundle.clues.find((item) => item.id === id)))
+      );
+      clueProps = uniqueById(
+        scenes.flatMap((scene) => (scene.cluePropIds || []).map((id) => bundle.clueProps.find((item) => item.id === id)))
+      );
+      npcs = [entity];
+    }
+
+    if (focus.type === "clueProp") {
+      scenes = uniqueById(bundle.scenes.filter((scene) => (scene.cluePropIds || []).includes(entity.id)));
+      clues = uniqueById(
+        scenes.flatMap((scene) => (scene.clueIds || []).map((id) => bundle.clues.find((item) => item.id === id)))
+      );
+      npcs = uniqueById(
+        scenes.flatMap((scene) => (scene.npcIds || []).map((id) => bundle.npcs.find((item) => item.id === id)))
+      );
+      clueProps = [entity];
+    }
+
+    return [
+      { type: "scene", label: "关联场景", items: uniqueById(scenes).filter((item) => item.id !== (focus.type === "scene" ? entity.id : null)) },
+      { type: "clue", label: "关联线索", items: uniqueById(clues).filter((item) => item.id !== (focus.type === "clue" ? entity.id : null)) },
+      { type: "npc", label: "关联 NPC", items: uniqueById(npcs).filter((item) => item.id !== (focus.type === "npc" ? entity.id : null)) },
+      {
+        type: "clueProp",
+        label: "关联线索道具",
+        items: uniqueById(clueProps).filter((item) => item.id !== (focus.type === "clueProp" ? entity.id : null)),
+      },
+    ];
+  }
+
+  function renderRelationBoard(bundle, campaign) {
+    const focus = getRelationFocus(bundle, campaign);
+    if (!focus) {
+      return `
+        <article class="card">
+          <p class="eyebrow">Relation Board</p>
+          <h3 class="section-title">案件关系板</h3>
+          <p class="muted-copy">先添加场景、线索、NPC 或线索道具，关系板才会出现。</p>
+        </article>
+      `;
+    }
+
+    const entity = getRelationEntity(bundle, focus);
+    const meta = getRelationNodeMeta(focus.type);
+    const groups = getRelationGroups(bundle, focus);
+    const sections = [
+      { type: "scene", label: "场景", items: bundle.scenes },
+      { type: "clue", label: "线索", items: bundle.clues },
+      { type: "npc", label: "NPC", items: bundle.npcs },
+      { type: "clueProp", label: "线索道具", items: bundle.clueProps },
+    ];
+
+    return `
+      <article class="card">
+        <p class="eyebrow">Relation Board</p>
+        <h3 class="section-title">案件关系板</h3>
+        <div class="relation-board">
+          <section class="relation-browser">
+            ${sections
+              .map(
+                (section) => `
+                <div class="relation-section">
+                  <div class="relation-section-head">
+                    <strong>${section.label}</strong>
+                    <span class="pill">${section.items.length}</span>
+                  </div>
+                  <div class="relation-node-grid">
+                    ${
+                      section.items.length
+                        ? section.items
+                            .map(
+                              (item) => `
+                              <button
+                                type="button"
+                                class="relation-node-button ${focus.type === section.type && focus.id === item.id ? "active" : ""}"
+                                data-focus-node="true"
+                                data-node-type="${section.type}"
+                                data-node-id="${item.id}"
+                              >
+                                <span class="relation-node-title">${section.type === "npc" ? item.name : item.title}</span>
+                                <span class="relation-node-meta">${
+                                  section.type === "scene"
+                                    ? item.type || "场景"
+                                    : section.type === "clue"
+                                    ? item.status || item.type || "线索"
+                                    : section.type === "npc"
+                                    ? item.role || "NPC"
+                                    : item.type || "线索道具"
+                                }</span>
+                              </button>`
+                            )
+                            .join("")
+                        : `<div class="relation-empty">暂无${section.label}</div>`
+                    }
+                  </div>
+                </div>`
+              )
+              .join("")}
+          </section>
+          <section class="relation-detail">
+            <div class="relation-detail-head">
+              <div>
+                <p class="eyebrow">${meta.eyebrow}</p>
+                <h4 class="relation-detail-title">${focus.type === "npc" ? entity.name : entity.title}</h4>
+              </div>
+              <span class="pill warning">${getFocusBadge(focus.type, entity)}</span>
+            </div>
+            <p class="muted-copy">${getRelationSummary(focus.type, entity)}</p>
+            <div class="button-row tight">
+              <button
+                type="button"
+                class="action-button"
+                data-open-node="true"
+                data-node-type="${focus.type}"
+                data-node-id="${entity.id}"
+              >
+                跳到对应编辑项
+              </button>
+            </div>
+            <div class="relation-group-list">
+              ${groups
+                .map(
+                  (group) => `
+                  <div class="relation-detail-group">
+                    <div class="relation-detail-group-head">
+                      <strong>${group.label}</strong>
+                      <span class="relation-count">${group.items.length}</span>
+                    </div>
+                    ${
+                      group.items.length
+                        ? group.items
+                            .map(
+                              (item) => `
+                              <button
+                                type="button"
+                                class="relation-link"
+                                data-open-node="true"
+                                data-node-type="${group.type}"
+                                data-node-id="${item.id}"
+                              >
+                                <span>${group.type === "npc" ? item.name : item.title}</span>
+                                <span class="small-copy">打开</span>
+                              </button>`
+                            )
+                            .join("")
+                        : `<p class="relation-empty">暂无${group.label}</p>`
+                    }
+                  </div>`
+                )
+                .join("")}
+            </div>
+          </section>
+        </div>
+      </article>
+    `;
   }
 
   function renderSearchResults(root, campaign, npcs, clues, clueProps) {
@@ -957,34 +1204,7 @@
             }
           </div>
         </article>
-        <article class="card">
-          <p class="eyebrow">Scene Flow</p>
-          <h3 class="section-title">场景与线索关联</h3>
-          <div class="issue-list">
-            ${
-              bundle.scenes.length
-                ? bundle.scenes
-                    .map((scene) => {
-                      const linkedClues = (scene.clueIds || [])
-                        .map((id) => bundle.clues.find((clue) => clue.id === id)?.title)
-                        .filter(Boolean);
-                      return `
-                        <article class="issue-item relation-item">
-                          <strong>${scene.title}</strong>
-                          <span class="small-copy">${scene.summary || "暂无简介"}</span>
-                          <div class="relation-flow">
-                            <span class="relation-node">${scene.title}</span>
-                            <span class="relation-arrow">-></span>
-                            <span class="relation-target">${linkedClues.join(" / ") || "未关联线索"}</span>
-                          </div>
-                        </article>
-                      `;
-                    })
-                    .join("")
-                : `<article class="issue-item"><strong>暂无关系图</strong><span class="small-copy">先添加场景和线索，再在场景编辑器中勾选关联线索。</span></article>`
-            }
-          </div>
-        </article>
+        ${renderRelationBoard(bundle, campaign)}
       `
         : collection.length
         ? collection.map((item) => config.renderCard(item, bundle)).join("")
@@ -1054,6 +1274,34 @@
     });
 
     if (state.workspaceTab === "overview") {
+      root.querySelectorAll("[data-focus-node]").forEach((button) => {
+        button.addEventListener("click", () => {
+          state.relationFocus = {
+            type: button.dataset.nodeType,
+            id: button.dataset.nodeId,
+          };
+          renderApp();
+        });
+      });
+
+      root.querySelectorAll("[data-open-node]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const tabMap = {
+            scene: "scenes",
+            clue: "clues",
+            npc: "npcs",
+            clueProp: "clueProps",
+          };
+          state.relationFocus = {
+            type: button.dataset.nodeType,
+            id: button.dataset.nodeId,
+          };
+          state.workspaceTab = tabMap[button.dataset.nodeType] || "overview";
+          state.editingEntityId = button.dataset.nodeId;
+          renderApp();
+        });
+      });
+
       root.querySelector("#overview-form").addEventListener("submit", (event) => {
         event.preventDefault();
         upsertCampaign(Object.fromEntries(new FormData(event.currentTarget).entries()), campaign.id);
