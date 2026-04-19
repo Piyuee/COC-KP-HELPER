@@ -238,110 +238,135 @@
     ],
     reference: [
       {
+        id: "reference-section-checks",
         section: "检定判定",
         eyebrow: "Checks",
         items: [
           {
+            id: "reference-item-success-levels",
             title: "成功等级",
             body: "常规成功：掷骰结果小于等于技能值；困难成功：小于等于一半；极难成功：小于等于五分之一。",
           },
           {
+            id: "reference-item-bonus-penalty",
             title: "奖励骰与惩罚骰",
             body: "重掷十位骰后取更优或更差结果。适合描述环境优势、准备充分或极端不利局面。",
           },
           {
+            id: "reference-item-opposed-rolls",
             title: "对抗检定",
             body: "先看双方谁达到更高成功等级；若等级相同，再比较成功数值，数值更高者胜出。",
           },
           {
+            id: "reference-item-push-rolls",
             title: "推动检定",
             body: "只有在失败后果值得升级时才推动。推动前先说清楚：如果再失败，局面会变得更糟。",
           },
         ],
       },
       {
+        id: "reference-section-combat",
         section: "战斗速查",
         eyebrow: "Combat",
         items: [
           {
+            id: "reference-item-initiative",
             title: "行动顺序",
             body: "通常按敏捷高低决定先后。需要时先让所有人声明意图，再按顺序结算，方便保持画面感。",
           },
           {
+            id: "reference-item-dodge-fightback",
             title: "闪避与反击",
             body: "近战被攻击时，目标通常在闪避和反击之间二选一。闪避更稳，反击成功则能直接回敬伤害。",
           },
           {
+            id: "reference-item-firearms-cover",
             title: "枪械与掩体",
             body: "距离、视野和掩体比数值更重要。先明确站位，再决定是否给奖励骰、惩罚骰或直接限制射击。",
           },
           {
+            id: "reference-item-combat-tips",
             title: "战斗主持提示",
             body: "COC 的战斗通常短而危险。不要把它主持成持久消耗战，重点放在压迫感和代价上。",
           },
         ],
       },
       {
+        id: "reference-section-chases",
         section: "追逐流程",
         eyebrow: "Chases",
         items: [
           {
+            id: "reference-item-chase-setup",
             title: "开追逐前先判断",
             body: "先比较双方 MOV、地形和起始距离。若差距过大，可能根本不需要完整追逐流程，直接判断结果更干脆。",
           },
           {
+            id: "reference-item-chase-route",
             title: "建立追逐路线",
             body: "把路线拆成几个明确节点，例如巷口、栅栏、楼梯、码头。每个节点都应有障碍、机会或风险。",
           },
           {
+            id: "reference-item-chase-rounds",
             title: "每轮关注什么",
             body: "每轮只抓三件事：谁拉近了距离，谁遇到障碍，谁制造了新的危险。不要把流程变成纯数字推进。",
           },
           {
+            id: "reference-item-chase-end",
             title: "追逐的结尾",
             body: "当双方距离拉开、被拦下、脱离视线或场景目标达成时，就该果断收束，不必拖成无意义长回合。",
           },
         ],
       },
       {
+        id: "reference-section-sanity",
         section: "疯狂与 SAN",
         eyebrow: "Sanity",
         items: [
           {
+            id: "reference-item-big-san-loss",
             title: "单次大量损失",
             body: "如果一次理智损失达到 5 点或更多，通常应立即考虑临时疯狂，并让后续表现和当前刺激源绑定。",
           },
           {
+            id: "reference-item-daily-san-loss",
             title: "当日累计崩溃",
             body: "如果一天内累计损失达到当前理智值的五分之一，通常应考虑不定疯狂，并让后续影响持续一段时间。",
           },
           {
+            id: "reference-item-san-judging",
             title: "SAN 损失怎么判",
             body: "先判断恐怖来源是人类残酷、异常现象还是神话冲击，再决定损失范围。数字只是结果，冲击方式更重要。",
           },
           {
+            id: "reference-item-insanity-tips",
             title: "疯狂主持提示",
             body: "优先让疯狂表现强化角色当下最害怕的事，而不是强行把玩家踢出行动。保留参与感通常比惩罚更好。",
           },
         ],
       },
       {
+        id: "reference-section-health",
         section: "伤害与状态",
         eyebrow: "Health",
         items: [
           {
+            id: "reference-item-major-wounds",
             title: "重大伤势",
             body: "如果单次伤害达到或超过角色最大 HP 的一半，应立刻考虑重大伤势的后果，战斗危险性会明显升级。",
           },
           {
+            id: "reference-item-dying",
             title: "濒死边缘",
             body: "HP 归零附近时，不要只报数字，要立刻明确角色还能不能行动、是否失去意识、是否需要急救或医疗处理。",
           },
           {
+            id: "reference-item-first-aid-medicine",
             title: "急救与医疗",
             body: "急救适合现场止血和短时稳定；医疗更偏后续恢复。开团时用两句话分清这两者，能少很多停顿。",
           },
           {
+            id: "reference-item-health-tips",
             title: "状态主持提示",
             body: "受伤不只是减数值，也应该改变角色的动作、呼吸、站姿和判断。把状态说出来，紧张感会更强。",
           },
@@ -358,6 +383,9 @@
     editingCampaignId: null,
     editingEntityId: null,
     editingSceneDescriptionId: null,
+    referenceEditMode: false,
+    editingReferenceSectionIndex: null,
+    editingReferenceItemIndex: null,
     draftLogText: "",
     flashMessage: null,
     relationFocus: null,
@@ -468,7 +496,28 @@
         createdAt: nowLabel(),
         text: "",
       }),
-      reference: clone(seed.reference),
+      reference:
+        Array.isArray(raw.reference) && raw.reference.length
+          ? raw.reference.map((section, index) => ({
+              id: section.id || `reference-section-${index + 1}`,
+              section: section.section || "",
+              eyebrow: section.eyebrow || "Quick Reference",
+              items: Array.isArray(section.items)
+                ? section.items.map((item, itemIndex) => ({
+                    id: item.id || `reference-item-${index + 1}-${itemIndex + 1}`,
+                    title: item.title || "",
+                    body: item.body || "",
+                  }))
+                : [],
+            }))
+          : clone(seed.reference).map((section, index) => ({
+              ...section,
+              id: section.id || `reference-section-${index + 1}`,
+              items: (section.items || []).map((item, itemIndex) => ({
+                ...item,
+                id: item.id || `reference-item-${index + 1}-${itemIndex + 1}`,
+              })),
+            })),
     };
   }
 
@@ -495,6 +544,7 @@
         clueProps: data.clueProps,
         sceneDescriptions: data.sceneDescriptions,
         sessionLogs: data.sessionLogs,
+        reference: data.reference,
       })
     );
   }
@@ -2173,13 +2223,128 @@
     }
   }
 
+  function getReferenceSection(sectionIndex) {
+    return Number.isInteger(sectionIndex) && sectionIndex >= 0 ? data.reference[sectionIndex] || null : null;
+  }
+
+  function getReferenceItem(sectionIndex, itemIndex) {
+    const section = getReferenceSection(sectionIndex);
+    return section && Number.isInteger(itemIndex) && itemIndex >= 0 ? section.items[itemIndex] || null : null;
+  }
+
+  function upsertReferenceSection(payload, sectionIndex) {
+    const normalizedPayload = {
+      section: String(payload.section || "").trim(),
+      eyebrow: String(payload.eyebrow || "").trim() || "Quick Reference",
+    };
+    if (!normalizedPayload.section) return;
+
+    if (Number.isInteger(sectionIndex) && sectionIndex >= 0) {
+      const target = data.reference[sectionIndex];
+      if (!target) return;
+      target.section = normalizedPayload.section;
+      target.eyebrow = normalizedPayload.eyebrow;
+      setFlash("规则分组已保存。", "success");
+    } else {
+      data.reference.push({
+        id: makeId("referenceSection"),
+        ...normalizedPayload,
+        items: [],
+      });
+      setFlash("已新增规则分组。", "success");
+    }
+    state.editingReferenceSectionIndex = null;
+    persist();
+  }
+
+  function removeReferenceSection(sectionIndex) {
+    if (!Number.isInteger(sectionIndex) || sectionIndex < 0) return;
+    data.reference.splice(sectionIndex, 1);
+    state.editingReferenceSectionIndex = null;
+    state.editingReferenceItemIndex = null;
+    persist();
+    setFlash("规则分组已删除。", "warning");
+  }
+
+  function upsertReferenceItem(payload, sectionIndex, itemIndex) {
+    const normalizedPayload = {
+      title: String(payload.title || "").trim(),
+      body: String(payload.body || "").trim(),
+    };
+    const targetSectionIndex = Number(payload.sectionIndex);
+    if (!normalizedPayload.title || !normalizedPayload.body || !Number.isInteger(targetSectionIndex) || targetSectionIndex < 0) return;
+
+    if (Number.isInteger(sectionIndex) && sectionIndex >= 0 && Number.isInteger(itemIndex) && itemIndex >= 0) {
+      const sourceSection = data.reference[sectionIndex];
+      const item = sourceSection?.items[itemIndex];
+      if (!item) return;
+      if (targetSectionIndex === sectionIndex) {
+        item.title = normalizedPayload.title;
+        item.body = normalizedPayload.body;
+      } else {
+        sourceSection.items.splice(itemIndex, 1);
+        data.reference[targetSectionIndex].items.push({
+          ...item,
+          title: normalizedPayload.title,
+          body: normalizedPayload.body,
+        });
+      }
+      setFlash("规则词条已保存。", "success");
+    } else {
+      data.reference[targetSectionIndex].items.push({
+        id: makeId("referenceItem"),
+        ...normalizedPayload,
+      });
+      setFlash("已新增规则词条。", "success");
+    }
+    state.editingReferenceSectionIndex = null;
+    state.editingReferenceItemIndex = null;
+    persist();
+  }
+
+  function removeReferenceItem(sectionIndex, itemIndex) {
+    const section = getReferenceSection(sectionIndex);
+    if (!section || !Number.isInteger(itemIndex) || itemIndex < 0) return;
+    section.items.splice(itemIndex, 1);
+    state.editingReferenceSectionIndex = null;
+    state.editingReferenceItemIndex = null;
+    persist();
+    setFlash("规则词条已删除。", "warning");
+  }
+
+  function resetReferenceEditorState() {
+    state.referenceEditMode = false;
+    state.editingReferenceSectionIndex = null;
+    state.editingReferenceItemIndex = null;
+  }
+
   function renderReference(root) {
+    const editingSection = getReferenceSection(state.editingReferenceSectionIndex);
+    const editingItem = getReferenceItem(state.editingReferenceSectionIndex, state.editingReferenceItemIndex);
+    const sectionDraft = editingSection || {
+      section: "",
+      eyebrow: "Quick Reference",
+    };
+    const itemDraft = editingItem || {
+      sectionIndex:
+        Number.isInteger(state.editingReferenceSectionIndex) && state.editingReferenceSectionIndex >= 0
+          ? state.editingReferenceSectionIndex
+          : 0,
+      title: "",
+      body: "",
+    };
+
     root.innerHTML = `
-      <div class="reference-layout">
+      <div class="reference-layout ${state.referenceEditMode ? "editing" : ""}">
         <section class="card reference-intro">
           <p class="eyebrow">Quick Reference</p>
           <h3 class="section-title">COC 7 版 KP 高频速查</h3>
           <p class="muted-copy">这里不是完整规则书，而是一页开团时最容易卡住的高频判断提示。优先帮助你快速决策和维持节奏。</p>
+          <div class="button-row tight">
+            <button type="button" class="action-button" id="toggle-reference-edit">${state.referenceEditMode ? "退出编辑" : "编辑规则速查"}</button>
+            ${state.referenceEditMode ? '<button type="button" class="action-button" id="new-reference-section">新增分组</button>' : ""}
+            ${state.referenceEditMode ? '<button type="button" class="action-button" id="new-reference-item">新增词条</button>' : ""}
+          </div>
           <div class="chip-row">
             ${data.reference
               .map(
@@ -2196,15 +2361,35 @@
             .map(
               (section, index) => `
               <section class="card reference-group" id="ref-section-${index}">
-                <p class="eyebrow">${section.eyebrow}</p>
-                <h3 class="section-title">${section.section}</h3>
+                <div class="reference-group-head">
+                  <div>
+                    <p class="eyebrow">${section.eyebrow}</p>
+                    <h3 class="section-title">${section.section}</h3>
+                  </div>
+                  ${
+                    state.referenceEditMode
+                      ? `<div class="button-row tight">
+                          <button type="button" class="action-button" data-edit-reference-section="${index}">编辑分组</button>
+                          <button type="button" class="action-button danger" data-delete-reference-section="${index}">删除分组</button>
+                        </div>`
+                      : ""
+                  }
+                </div>
                 <div class="reference-item-list">
                   ${section.items
                     .map(
-                      (item) => `
+                      (item, itemIndex) => `
                       <article class="reference-item">
                         <strong>${item.title}</strong>
                         <p class="muted-copy">${item.body}</p>
+                        ${
+                          state.referenceEditMode
+                            ? `<div class="button-row tight">
+                                <button type="button" class="action-button" data-edit-reference-item="${index}:${itemIndex}">编辑词条</button>
+                                <button type="button" class="action-button danger" data-delete-reference-item="${index}:${itemIndex}">删除词条</button>
+                              </div>`
+                            : ""
+                        }
                       </article>`
                     )
                     .join("")}
@@ -2213,8 +2398,56 @@
             )
             .join("")}
         </div>
+        ${
+          state.referenceEditMode
+            ? `
+            <section class="card reference-editor-panel">
+              <p class="eyebrow">Reference Editor</p>
+              <h3 class="section-title">编辑规则速查</h3>
+              <form id="reference-section-form" class="entity-form single-column">
+                <label><span>分组标题</span><input name="section" value="${sectionDraft.section || ""}" placeholder="例如：检定判定" required /></label>
+                <label><span>英文眉题</span><input name="eyebrow" value="${sectionDraft.eyebrow || ""}" placeholder="例如：Checks" /></label>
+                <div class="button-row tight">
+                  <button type="submit" class="action-button primary">${editingSection ? "保存分组" : "新增分组"}</button>
+                  ${editingSection ? '<button type="button" class="action-button" id="cancel-reference-section">取消</button>' : ""}
+                </div>
+              </form>
+              <form id="reference-item-form" class="entity-form single-column">
+                <label>
+                  <span>所属分组</span>
+                  <select name="sectionIndex">
+                    ${data.reference
+                      .map(
+                        (section, index) =>
+                          `<option value="${index}" ${
+                            Number(itemDraft.sectionIndex) === index ||
+                            (!editingItem && !Number.isInteger(itemDraft.sectionIndex) && index === 0)
+                              ? "selected"
+                              : ""
+                          }>${section.section}</option>`
+                      )
+                      .join("")}
+                  </select>
+                </label>
+                <label><span>词条标题</span><input name="title" value="${editingItem ? editingItem.title : itemDraft.title || ""}" placeholder="例如：推动检定" required /></label>
+                <label class="span-2"><span>词条正文</span><textarea name="body" rows="6" required>${editingItem ? editingItem.body : itemDraft.body || ""}</textarea></label>
+                <div class="button-row tight">
+                  <button type="submit" class="action-button primary">${editingItem ? "保存词条" : "新增词条"}</button>
+                  ${editingItem ? '<button type="button" class="action-button" id="cancel-reference-item">取消</button>' : ""}
+                </div>
+              </form>
+            </section>`
+            : ""
+        }
       </div>
     `;
+
+    root.querySelector("#toggle-reference-edit").addEventListener("click", () => {
+      state.referenceEditMode = !state.referenceEditMode;
+      state.editingReferenceSectionIndex = null;
+      state.editingReferenceItemIndex = null;
+      renderApp();
+    });
 
     root.querySelectorAll("[data-reference-jump]").forEach((button) => {
       button.addEventListener("click", () => {
@@ -2230,6 +2463,94 @@
         }, 1400);
       });
     });
+
+    if (!state.referenceEditMode) return;
+
+    const sectionForm = root.querySelector("#reference-section-form");
+    const itemForm = root.querySelector("#reference-item-form");
+
+    root.querySelector("#new-reference-section").addEventListener("click", () => {
+      state.editingReferenceSectionIndex = null;
+      state.editingReferenceItemIndex = null;
+      renderApp();
+    });
+
+    root.querySelector("#new-reference-item").addEventListener("click", () => {
+      if (!data.reference.length) {
+        setFlash("请先新增一个规则分组，再添加词条。", "warning");
+        renderApp();
+        return;
+      }
+      state.editingReferenceItemIndex = null;
+      renderApp();
+    });
+
+    root.querySelectorAll("[data-edit-reference-section]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.editingReferenceSectionIndex = Number(button.dataset.editReferenceSection);
+        state.editingReferenceItemIndex = null;
+        renderApp();
+      });
+    });
+
+    root.querySelectorAll("[data-delete-reference-section]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (!window.confirm("确定删除这个规则分组吗？其中的词条也会一起删除。")) return;
+        removeReferenceSection(Number(button.dataset.deleteReferenceSection));
+        renderApp();
+      });
+    });
+
+    root.querySelectorAll("[data-edit-reference-item]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const [sectionIndex, itemIndex] = button.dataset.editReferenceItem.split(":").map(Number);
+        state.editingReferenceSectionIndex = sectionIndex;
+        state.editingReferenceItemIndex = itemIndex;
+        renderApp();
+      });
+    });
+
+    root.querySelectorAll("[data-delete-reference-item]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const [sectionIndex, itemIndex] = button.dataset.deleteReferenceItem.split(":").map(Number);
+        if (!window.confirm("确定删除这个规则词条吗？")) return;
+        removeReferenceItem(sectionIndex, itemIndex);
+        renderApp();
+      });
+    });
+
+    sectionForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      upsertReferenceSection(Object.fromEntries(new FormData(event.currentTarget).entries()), state.editingReferenceSectionIndex);
+      renderApp();
+    });
+
+    itemForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      upsertReferenceItem(
+        Object.fromEntries(new FormData(event.currentTarget).entries()),
+        state.editingReferenceSectionIndex,
+        state.editingReferenceItemIndex
+      );
+      renderApp();
+    });
+
+    const cancelReferenceSection = root.querySelector("#cancel-reference-section");
+    if (cancelReferenceSection) {
+      cancelReferenceSection.addEventListener("click", () => {
+        state.editingReferenceSectionIndex = null;
+        state.editingReferenceItemIndex = null;
+        renderApp();
+      });
+    }
+
+    const cancelReferenceItem = root.querySelector("#cancel-reference-item");
+    if (cancelReferenceItem) {
+      cancelReferenceItem.addEventListener("click", () => {
+        state.editingReferenceItemIndex = null;
+        renderApp();
+      });
+    }
   }
 
   function upsertCampaign(payload, campaignId) {
@@ -2446,6 +2767,7 @@
       state.editingCampaignId = null;
       state.editingEntityId = null;
       state.editingSceneDescriptionId = null;
+      resetReferenceEditorState();
       renderApp();
     });
   });
@@ -2460,6 +2782,7 @@
     state.editingCampaignId = null;
     state.editingEntityId = null;
     state.editingSceneDescriptionId = null;
+    resetReferenceEditorState();
     renderApp();
   });
 
@@ -2475,6 +2798,7 @@
           clueProps: data.clueProps,
           sceneDescriptions: data.sceneDescriptions,
           sessionLogs: data.sessionLogs,
+          reference: data.reference,
         },
         null,
         2
@@ -2511,6 +2835,7 @@
       state.editingSceneDescriptionId = null;
       state.searchQuery = "";
       state.draftLogText = "";
+      resetReferenceEditorState();
       persist();
       setFlash("数据导入成功。", "success");
       renderApp();
@@ -2539,6 +2864,7 @@
     state.editingSceneDescriptionId = null;
     state.searchQuery = "";
     state.draftLogText = "";
+    resetReferenceEditorState();
     persist();
     setFlash("已恢复示例数据。", "warning");
     renderApp();

@@ -752,6 +752,26 @@ select {
   gap: 18px;
 }
 
+.reference-layout.editing {
+  grid-template-columns: minmax(0, 1.8fr) minmax(280px, 1fr);
+  align-items: start;
+}
+
+.reference-intro {
+  gap: 16px;
+}
+
+.reference-group-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.reference-group-head p {
+  margin-top: 6px;
+}
+
 .reference-item-list {
   gap: 12px;
 }
@@ -771,6 +791,21 @@ select {
 .reference-item strong {
   display: block;
   margin-bottom: 8px;
+}
+
+.reference-item p {
+  margin: 0;
+}
+
+.reference-editor-panel {
+  position: sticky;
+  top: 104px;
+  display: grid;
+  gap: 18px;
+}
+
+.reference-editor-panel .entity-form {
+  margin-top: 0;
 }
 
 .button-row {
@@ -1051,6 +1086,7 @@ select {
   .grid.cols-3,
   .grid.cols-2,
   .workspace-columns,
+  .reference-layout.editing,
   .relation-board,
   .two-col,
   .three-col {
@@ -1070,5 +1106,13 @@ select {
   .checkbox-grid,
   .relation-node-grid {
     grid-template-columns: 1fr;
+  }
+
+  .reference-group-head {
+    flex-direction: column;
+  }
+
+  .reference-editor-panel {
+    position: static;
   }
 }
