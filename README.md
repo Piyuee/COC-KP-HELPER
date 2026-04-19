@@ -29,6 +29,7 @@ COC KP Helper 的目标是帮助守秘人：
 ## Repository Structure
 
 - `index.html` - static app shell for the first-version UI
+- `src/app.js` - direct-open runtime entry used by the browser
 - `src/main.js` - frontend entry and render orchestration
 - `docs/product-brief.md` - product positioning and information architecture
 - `docs/mvp-spec.md` - MVP scope, priorities, and core flows
@@ -38,6 +39,7 @@ COC KP Helper 的目标是帮助守秘人：
 - `docs/使用手册.md` - Chinese user manual
 
 - `index.html` - 第一版页面的静态入口
+- `src/app.js` - 浏览器直接打开时使用的运行时入口
 - `src/main.js` - 前端入口与渲染调度
 - `docs/product-brief.md` - 产品定位与信息架构
 - `docs/mvp-spec.md` - MVP 范围、优先级和核心流程

@@ -1,0 +1,1321 @@
+(function () {
+  const STORAGE_KEY = "coc-kp-helper-data-v1";
+
+  const PAGE_TITLES = {
+    dashboard: "概览",
+    campaigns: "案件库",
+    workspace: "案件工作台",
+    running: "跑团模式",
+    handouts: "手outs库",
+    reference: "规则速查",
+  };
+
+  const seedData = {
+    campaigns: [
+      {
+        id: "misty-ledger",
+        title: "雾港账簿",
+        era: "1920s 上海租界",
+        theme: "都市阴谋 / 邪教渗透",
+        pitch: "一名记者失踪后，玩家们在会计账簿里发现一串指向港口仪式的付款记录。",
+        coreTruth:
+          "真正操控失踪案的不是帮派，而是借航运公司掩护的密教。他们需要在月蚀夜完成一次海上召唤。",
+        status: "进行中",
+        currentSceneId: "dock-six",
+        playerKnowledge: "记者失踪、账簿异常、六码头夜间活动频繁。",
+        playerMisread: "玩家仍将案件理解为走私灭口，而非仪式准备。",
+        nextSuggestion: "准备法医摊牌和仓库潜入的两套节奏，避免玩家过早撞向终局。",
+      },
+      {
+        id: "silent-manor",
+        title: "寂静庄园",
+        era: "1933 英格兰乡野",
+        theme: "古宅 / 家族秘密",
+        pitch: "继承人邀请调查员前往偏僻庄园，却在第一晚失踪。",
+        coreTruth:
+          "庄园中的回声并非闹鬼，而是祖先留下的仪式装置在模仿死者声音，引导后代继续献祭。",
+        status: "草稿",
+        currentSceneId: "",
+        playerKnowledge: "玩家尚未开始调查。",
+        playerMisread: "无。",
+        nextSuggestion: "先补一条白天探索庄园与一条夜间恐怖演出路径。",
+      },
+    ],
+    scenes: [
+      {
+        id: "newspaper-office",
+        campaignId: "misty-ledger",
+        title: "《晨钟报》编辑部",
+        type: "调查",
+        summary: "记者最后出现的地方。桌面很整洁，只有被刻意撕走的一页速记本。",
+        atmosphere: "昏黄吊灯、油墨味和深夜未散的烟雾，空气里残留着急促离开的痕迹。",
+        clueNote: "可找到被压在打字机下的港口仓单编号。",
+        fallback: "若玩家没搜到，编辑会在紧张时提到记者最近总去六码头。",
+        npcIds: ["editor-xu"],
+        handoutIds: ["torn-note"],
+      },
+      {
+        id: "dock-six",
+        campaignId: "misty-ledger",
+        title: "六码头仓库",
+        type: "潜入",
+        summary: "夜里封锁的仓库区，巡逻比平常多，海风里夹着异样腥味。",
+        atmosphere: "雾气吞掉远处汽笛声，脚步与海浪回响混杂，仿佛有什么在水下同步呼吸。",
+        clueNote: "账簿上的付款对象与仓库登记簿上的假名一致。",
+        fallback: "如果没有潜入成功，可从码头苦力口中得知今晚会有秘密装船。",
+        npcIds: ["dock-clerk"],
+        handoutIds: ["warehouse-register"],
+      },
+      {
+        id: "forensic-room",
+        campaignId: "misty-ledger",
+        title: "租界巡捕房法医室",
+        type: "社交",
+        summary: "法医表面冷静配合，实际隐瞒了一份与海水腐蚀有关的尸检异常。",
+        atmosphere: "金属器械冰冷反光，福尔马林味压得人说话也想压低声音。",
+        clueNote: "尸体肺部残留并不符合普通溺亡。",
+        fallback: "法医若被识破恐惧，会主动请求保护并交出原始记录。",
+        npcIds: ["chen-coroner"],
+        handoutIds: ["coroner-report"],
+      },
+    ],
+    clues: [
+      {
+        id: "ledger-payments",
+        campaignId: "misty-ledger",
+        title: "异常港口付款记录",
+        type: "关键线索",
+        source: "《晨钟报》编辑部",
+        content: "账簿显示连续三周有匿名款项流向六码头 17 号仓库。",
+        fallback: "编辑口供 / 港务处复印记录",
+        leadsTo: "六码头仓库",
+        status: "已获得",
+      },
+      {
+        id: "corroded-lungs",
+        campaignId: "misty-ledger",
+        title: "不符合常理的肺部腐蚀",
+        type: "关键线索",
+        source: "法医室",
+        content: "死者肺部存在细小盐晶和未知粘膜损伤，像是在半清醒状态下接触海水。",
+        fallback: "法医坦白 / 尸检照片",
+        leadsTo: "海上仪式假设",
+        status: "未获得",
+      },
+      {
+        id: "warehouse-alias",
+        campaignId: "misty-ledger",
+        title: "仓库登记簿假名",
+        type: "关联线索",
+        source: "六码头仓库",
+        content: "登记人使用的假名与失踪记者追踪的一位航运会计相匹配。",
+        fallback: "码头苦力闲谈",
+        leadsTo: "航运公司会计",
+        status: "进行中",
+      },
+    ],
+    npcs: [
+      {
+        id: "editor-xu",
+        campaignId: "misty-ledger",
+        name: "许主编",
+        role: "报社编辑",
+        attitude: "警惕但愿意合作",
+        publicInfo: "担心报社牵连政治势力，因此极力淡化记者失踪。",
+        secret: "他曾收过匿名警告信，知道记者在调查港口走私。",
+        motivation: "保护报社和自己的职位。",
+        clue: "若被说服，会交出失踪前最后一份选题草稿。",
+      },
+      {
+        id: "chen-coroner",
+        campaignId: "misty-ledger",
+        name: "陈法医",
+        role: "巡捕房法医",
+        attitude: "表面镇定，实际恐惧",
+        publicInfo: "坚持尸体只是普通溺亡。",
+        secret: "真正的尸检结果让他联想到三年前未公开的海祭案。",
+        motivation: "不想再被卷入超出理解范围的案件。",
+        clue: "如果获得保护承诺，他会交出原始尸检记录。",
+      },
+      {
+        id: "dock-clerk",
+        campaignId: "misty-ledger",
+        name: "韩管理员",
+        role: "仓库管理员",
+        attitude: "敌对",
+        publicInfo: "严词否认仓库夜间有异常活动。",
+        secret: "他知道月蚀夜要装运的其实是祭器与被选中的祭品。",
+        motivation: "保住密教提供的利益与地位。",
+        clue: "若被逼入绝境，会泄露装船时间。",
+      },
+    ],
+    handouts: [
+      {
+        id: "torn-note",
+        campaignId: "misty-ledger",
+        title: "被撕裂的速记页",
+        type: "纸质线索",
+        reveal: "编辑部搜查成功时",
+        effect: "让玩家意识到记者不是随意失踪，而是已经接近某个名单。",
+      },
+      {
+        id: "coroner-report",
+        campaignId: "misty-ledger",
+        title: "尸检原始记录",
+        type: "医疗档案",
+        reveal: "说服或威压法医后",
+        effect: "把调查从普通谋杀转向异常仪式与海上活动。",
+      },
+      {
+        id: "warehouse-register",
+        campaignId: "misty-ledger",
+        title: "仓库登记簿影印件",
+        type: "记录文书",
+        reveal: "潜入仓库或贿赂苦力后",
+        effect: "建立假名、账簿和仓库的关联。",
+      },
+    ],
+    sessionLogs: [
+      {
+        id: "log-1",
+        campaignId: "misty-ledger",
+        createdAt: "2026-04-19 19:00",
+        text: "玩家已确认记者最后一次公开露面在《晨钟报》编辑部。",
+      },
+      {
+        id: "log-2",
+        campaignId: "misty-ledger",
+        createdAt: "2026-04-19 19:40",
+        text: "他们怀疑法医隐瞒尸检结论，但尚未提出直接威胁。",
+      },
+      {
+        id: "log-3",
+        campaignId: "misty-ledger",
+        createdAt: "2026-04-19 20:15",
+        text: "当前最危险的选择是今晚直接前往六码头仓库。",
+      },
+    ],
+    reference: [
+      {
+        title: "成功等级",
+        body: "常规成功：掷骰结果小于等于技能值；困难成功：小于等于一半；极难成功：小于等于五分之一。",
+      },
+      {
+        title: "奖励骰与惩罚骰",
+        body: "重掷十位骰后取更优或更差结果。适合描述环境优势、准备充分或极端不利局面。",
+      },
+      {
+        title: "SAN 损失提示",
+        body: "先决定冲击强度，再区分已知人类恐怖与神话恐怖。若损失超过当前理智的五分之一，应立即考虑临时疯狂。",
+      },
+    ],
+  };
+
+  const defaultUiState = {
+    currentPage: "dashboard",
+    currentCampaignId: "misty-ledger",
+    workspaceTab: "overview",
+    searchQuery: "",
+    editingCampaignId: null,
+    editingEntityId: null,
+    draftLogText: "",
+  };
+
+  function clone(value) {
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  function makeId(prefix) {
+    return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+  }
+
+  function nowLabel() {
+    const date = new Date();
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+  }
+
+  function normalizeCampaign(campaign) {
+    return {
+      currentSceneId: "",
+      playerKnowledge: "",
+      playerMisread: "",
+      nextSuggestion: "",
+      status: "草稿",
+      ...campaign,
+    };
+  }
+
+  function normalizeEntityList(list, fallbackCampaignId, prefix, extraDefaults) {
+    return (list || []).map((item, index) => ({
+      id: item.id || `${prefix}-${index + 1}`,
+      campaignId: item.campaignId || fallbackCampaignId,
+      ...extraDefaults,
+      ...item,
+    }));
+  }
+
+  function normalizePersistedData(raw) {
+    const seed = clone(seedData);
+    if (!raw) return seed;
+
+    const firstCampaignId = (raw.campaigns && raw.campaigns[0] && raw.campaigns[0].id) || seed.campaigns[0].id;
+    const campaigns = (raw.campaigns || seed.campaigns).map(normalizeCampaign);
+    return {
+      campaigns,
+      scenes: normalizeEntityList(raw.scenes || seed.scenes, firstCampaignId, "scene", {
+        title: "",
+        type: "",
+        summary: "",
+        atmosphere: "",
+        clueNote: "",
+        fallback: "",
+        npcIds: [],
+        handoutIds: [],
+      }).map((scene) => ({
+        ...scene,
+        npcIds: Array.isArray(scene.npcIds) ? scene.npcIds : [],
+        handoutIds: Array.isArray(scene.handoutIds) ? scene.handoutIds : [],
+      })),
+      clues: normalizeEntityList(raw.clues || seed.clues, firstCampaignId, "clue", {
+        title: "",
+        type: "",
+        source: "",
+        content: "",
+        fallback: "",
+        leadsTo: "",
+        status: "未获得",
+      }),
+      npcs: normalizeEntityList(raw.npcs || seed.npcs, firstCampaignId, "npc", {
+        name: "",
+        role: "",
+        attitude: "",
+        publicInfo: "",
+        secret: "",
+        motivation: "",
+        clue: "",
+      }),
+      handouts: normalizeEntityList(raw.handouts || seed.handouts, firstCampaignId, "handout", {
+        title: "",
+        type: "",
+        reveal: "",
+        effect: "",
+      }),
+      sessionLogs: normalizeEntityList(raw.sessionLogs || seed.sessionLogs, firstCampaignId, "log", {
+        createdAt: nowLabel(),
+        text: "",
+      }),
+      reference: clone(seed.reference),
+    };
+  }
+
+  function loadData() {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      return normalizePersistedData(raw ? JSON.parse(raw) : null);
+    } catch (error) {
+      return clone(seedData);
+    }
+  }
+
+  const state = { ...defaultUiState };
+  const data = loadData();
+
+  function persist() {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        campaigns: data.campaigns,
+        scenes: data.scenes,
+        clues: data.clues,
+        npcs: data.npcs,
+        handouts: data.handouts,
+        sessionLogs: data.sessionLogs,
+      })
+    );
+  }
+
+  function getCampaign() {
+    return data.campaigns.find((campaign) => campaign.id === state.currentCampaignId) || data.campaigns[0] || null;
+  }
+
+  function getCampaignBundle(campaignId) {
+    const targetCampaignId = campaignId || state.currentCampaignId;
+    return {
+      campaign: data.campaigns.find((campaign) => campaign.id === targetCampaignId) || null,
+      scenes: data.scenes.filter((item) => item.campaignId === targetCampaignId),
+      clues: data.clues.filter((item) => item.campaignId === targetCampaignId),
+      npcs: data.npcs.filter((item) => item.campaignId === targetCampaignId),
+      handouts: data.handouts.filter((item) => item.campaignId === targetCampaignId),
+      sessionLogs: data.sessionLogs
+        .filter((item) => item.campaignId === targetCampaignId)
+        .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)),
+    };
+  }
+
+  function getEntity(entityType, entityId) {
+    return data[entityType].find((item) => item.id === entityId) || null;
+  }
+
+  function createLayoutBindings() {
+    return {
+      pageTitle: document.getElementById("page-title"),
+      navButtons: [...document.querySelectorAll(".nav-item")],
+      searchInput: document.getElementById("global-search"),
+      newCampaignButton: document.getElementById("new-campaign-button"),
+      exportButton: document.getElementById("export-button"),
+      importButton: document.getElementById("import-button"),
+      resetButton: document.getElementById("reset-button"),
+      importFileInput: document.getElementById("import-file-input"),
+      sidebarCampaignTitle: document.getElementById("sidebar-campaign-title"),
+      sidebarCampaignSummary: document.getElementById("sidebar-campaign-summary"),
+      sidebarOpenClues: document.getElementById("sidebar-open-clues"),
+      sidebarOpenThreads: document.getElementById("sidebar-open-threads"),
+      pages: {
+        dashboard: document.getElementById("page-dashboard"),
+        campaigns: document.getElementById("page-campaigns"),
+        workspace: document.getElementById("page-workspace"),
+        running: document.getElementById("page-running"),
+        handouts: document.getElementById("page-handouts"),
+        reference: document.getElementById("page-reference"),
+      },
+    };
+  }
+
+  function updateLayoutChrome(bindings, campaign, bundle) {
+    bindings.pageTitle.textContent = PAGE_TITLES[state.currentPage];
+    bindings.sidebarCampaignTitle.textContent = campaign ? campaign.title : "尚未创建案件";
+    bindings.sidebarCampaignSummary.textContent = campaign
+      ? campaign.pitch
+      : "点击“新建案件”开始构建你的第一场调查。";
+    bindings.sidebarOpenClues.textContent = `开放线索 ${bundle.clues.length}`;
+    bindings.sidebarOpenThreads.textContent = `未回收伏笔 ${bundle.clues.filter((item) => item.status !== "已获得").length}`;
+
+    bindings.navButtons.forEach((button) => {
+      button.classList.toggle("active", button.dataset.page === state.currentPage);
+    });
+
+    Object.entries(bindings.pages).forEach(([key, element]) => {
+      element.classList.toggle("active", key === state.currentPage);
+    });
+  }
+
+  function renderSearchResults(root, campaign, npcs, clues, handouts) {
+    root.querySelectorAll(".search-results").forEach((el) => el.remove());
+
+    const normalizedQuery = state.searchQuery.trim().toLowerCase();
+    if (!normalizedQuery) return;
+
+    const searchable = [
+      ...npcs.map((npc) => ({ type: "NPC", title: npc.name, body: `${npc.role} · ${npc.publicInfo}` })),
+      ...clues.map((clue) => ({ type: "线索", title: clue.title, body: `${clue.source} · ${clue.content}` })),
+      ...handouts.map((handout) => ({ type: "手outs", title: handout.title, body: `${handout.type} · ${handout.effect}` })),
+      ...(campaign ? [{ type: "案件", title: campaign.title, body: campaign.pitch }] : []),
+    ].filter((item) => `${item.title} ${item.body}`.toLowerCase().includes(normalizedQuery));
+
+    const results = document.createElement("div");
+    results.className = "search-results";
+    results.innerHTML = searchable.length
+      ? searchable
+          .map(
+            (item) => `
+            <article class="search-hit">
+              <strong>${item.type} · ${item.title}</strong>
+              <p class="small-copy">${item.body}</p>
+            </article>`
+          )
+          .join("")
+      : `<article class="search-hit"><strong>没有命中结果</strong><p class="small-copy">试试搜索“法医”“港口”“账簿”之类的关键词。</p></article>`;
+
+    root.prepend(results);
+  }
+
+  function renderDashboard(root, campaign, bundle) {
+    if (!campaign) {
+      root.innerHTML = `
+        <section class="card empty-state">
+          <p class="eyebrow">Dashboard</p>
+          <h3 class="section-title">还没有案件</h3>
+          <p class="muted-copy">从右上角“新建案件”开始，先录入一个调查主题和核心真相。</p>
+        </section>
+      `;
+      return;
+    }
+
+    const obtainedClues = bundle.clues.filter((item) => item.status === "已获得").length;
+    const unresolvedThreads = bundle.clues.filter((item) => item.status !== "已获得").length;
+    const currentScene = bundle.scenes.find((scene) => scene.id === campaign.currentSceneId);
+
+    root.innerHTML = `
+      <div class="grid cols-4">
+        <article class="card stat-card">
+          <div class="value">${bundle.sessionLogs.length}</div>
+          <div class="label">场次记录</div>
+        </article>
+        <article class="card stat-card">
+          <div class="value">${bundle.scenes.length}</div>
+          <div class="label">场景数量</div>
+        </article>
+        <article class="card stat-card">
+          <div class="value">${obtainedClues}/${bundle.clues.length}</div>
+          <div class="label">线索获取</div>
+        </article>
+        <article class="card stat-card">
+          <div class="value">${unresolvedThreads}</div>
+          <div class="label">待推进线索</div>
+        </article>
+      </div>
+      <div class="workspace-columns" style="margin-top: 18px;">
+        <section class="card">
+          <p class="eyebrow">Campaign Snapshot</p>
+          <h3 class="section-title">${campaign.title}</h3>
+          <p class="muted-copy">${campaign.pitch}</p>
+          <div class="chip-row">
+            <span class="chip">${campaign.era}</span>
+            <span class="chip">${campaign.theme}</span>
+            <span class="chip">${campaign.status}</span>
+          </div>
+          <div class="key-value" style="margin-top: 18px;">
+            <div><strong>核心真相</strong><span>${campaign.coreTruth || "未填写"}</span></div>
+            <div><strong>玩家已知</strong><span>${campaign.playerKnowledge || "未填写"}</span></div>
+            <div><strong>玩家误判</strong><span>${campaign.playerMisread || "未填写"}</span></div>
+            <div><strong>下一步建议</strong><span>${campaign.nextSuggestion || "未填写"}</span></div>
+          </div>
+        </section>
+        <section class="card">
+          <p class="eyebrow">Keeper Focus</p>
+          <h3 class="section-title">当前使用提示</h3>
+          <div class="timeline">
+            <div class="timeline-item">
+              <strong>当前场景</strong>
+              <p class="list-copy">${currentScene ? currentScene.title : "尚未指定当前场景"}</p>
+            </div>
+            <div class="timeline-item">
+              <strong>关键线索未获得</strong>
+              <p class="list-copy">${bundle.clues
+                .filter((item) => item.type.includes("关键") && item.status !== "已获得")
+                .map((item) => item.title)
+                .join(" / ") || "无"}</p>
+            </div>
+            <div class="timeline-item">
+              <strong>最近记录</strong>
+              <p class="list-copy">${bundle.sessionLogs[0] ? bundle.sessionLogs[0].text : "还没有跑团记录。可去“跑团模式”快速追加。"}</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    `;
+  }
+
+  function renderCampaigns(root, editingCampaign) {
+    const draft = editingCampaign || {
+      title: "",
+      era: "",
+      theme: "",
+      pitch: "",
+      coreTruth: "",
+      status: "草稿",
+      playerKnowledge: "",
+      playerMisread: "",
+      nextSuggestion: "",
+      currentSceneId: "",
+    };
+
+    root.innerHTML = `
+      <div class="workspace-columns">
+        <section class="card">
+          <p class="eyebrow">Campaign Library</p>
+          <h3 class="section-title">案件列表</h3>
+          <div class="list-stack">
+            ${data.campaigns
+              .map(
+                (campaign) => `
+                <article class="mini-card campaign-card">
+                  <header>
+                    <div>
+                      <p class="eyebrow">${campaign.era}</p>
+                      <h3>${campaign.title}</h3>
+                    </div>
+                    <span class="pill ${campaign.status === "进行中" ? "warning" : ""}">${campaign.status}</span>
+                  </header>
+                  <p class="campaign-meta">${campaign.pitch}</p>
+                  <div class="chip-row"><span class="chip">${campaign.theme}</span></div>
+                  <div class="button-row">
+                    <button class="action-button primary" data-open="${campaign.id}">打开</button>
+                    <button class="action-button" data-edit="${campaign.id}">编辑</button>
+                    <button class="action-button danger" data-delete="${campaign.id}">删除</button>
+                  </div>
+                </article>`
+              )
+              .join("")}
+          </div>
+        </section>
+        <section class="card">
+          <p class="eyebrow">${editingCampaign ? "Edit Campaign" : "New Campaign"}</p>
+          <h3 class="section-title">${editingCampaign ? "编辑案件" : "新建案件"}</h3>
+          <form id="campaign-form" class="entity-form">
+            <label><span>案件标题</span><input name="title" value="${draft.title}" required /></label>
+            <label><span>时代与地点</span><input name="era" value="${draft.era}" placeholder="例如：1920s 上海租界" required /></label>
+            <label><span>主题</span><input name="theme" value="${draft.theme}" placeholder="都市阴谋 / 古宅 / 邪教" /></label>
+            <label><span>状态</span>
+              <select name="status">
+                ${["草稿", "进行中", "已归档"]
+                  .map((option) => `<option value="${option}" ${draft.status === option ? "selected" : ""}>${option}</option>`)
+                  .join("")}
+              </select>
+            </label>
+            <label class="span-2"><span>一句话钩子</span><textarea name="pitch" rows="3" required>${draft.pitch}</textarea></label>
+            <label class="span-2"><span>核心真相</span><textarea name="coreTruth" rows="4">${draft.coreTruth}</textarea></label>
+            <label class="span-2"><span>玩家已知</span><textarea name="playerKnowledge" rows="3">${draft.playerKnowledge}</textarea></label>
+            <label class="span-2"><span>玩家误判</span><textarea name="playerMisread" rows="3">${draft.playerMisread}</textarea></label>
+            <label class="span-2"><span>下一步建议</span><textarea name="nextSuggestion" rows="3">${draft.nextSuggestion}</textarea></label>
+            <div class="button-row span-2">
+              <button type="submit" class="action-button primary">${editingCampaign ? "保存修改" : "创建案件"}</button>
+              ${editingCampaign ? '<button type="button" id="cancel-campaign-edit" class="action-button">取消编辑</button>' : ""}
+            </div>
+          </form>
+        </section>
+      </div>
+    `;
+
+    root.querySelectorAll("[data-open]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.currentCampaignId = button.dataset.open;
+        state.currentPage = "workspace";
+        state.editingCampaignId = null;
+        state.editingEntityId = null;
+        renderApp();
+      });
+    });
+
+    root.querySelectorAll("[data-edit]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.editingCampaignId = button.dataset.edit;
+        renderApp();
+      });
+    });
+
+    root.querySelectorAll("[data-delete]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (!window.confirm("删除案件会同时移除其场景、线索、NPC、手outs和跑团记录，确定继续吗？")) return;
+        removeCampaign(button.dataset.delete);
+        renderApp();
+      });
+    });
+
+    root.querySelector("#campaign-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      upsertCampaign(Object.fromEntries(new FormData(event.currentTarget).entries()));
+      renderApp();
+    });
+
+    const cancelButton = root.querySelector("#cancel-campaign-edit");
+    if (cancelButton) {
+      cancelButton.addEventListener("click", () => {
+        state.editingCampaignId = null;
+        renderApp();
+      });
+    }
+  }
+
+  const entityConfig = {
+    scenes: {
+      title: "场景",
+      collectionKey: "scenes",
+      fields: [
+        { name: "title", label: "场景名", type: "input", required: true },
+        { name: "type", label: "场景类型", type: "input", placeholder: "调查 / 社交 / 潜入" },
+        { name: "summary", label: "场景简介", type: "textarea", rows: 3, wide: true },
+        { name: "atmosphere", label: "氛围描述", type: "textarea", rows: 3, wide: true },
+        { name: "clueNote", label: "关键线索", type: "textarea", rows: 3, wide: true },
+        { name: "fallback", label: "补救线索", type: "textarea", rows: 3, wide: true },
+        { name: "npcIds", label: "关联 NPC", type: "multiselect", optionKey: "npcs", optionLabel: "name" },
+        { name: "handoutIds", label: "关联手outs", type: "multiselect", optionKey: "handouts", optionLabel: "title" },
+      ],
+      renderCard(item, bundle) {
+        const npcNames = (item.npcIds || []).map((id) => bundle.npcs.find((npc) => npc.id === id)?.name).filter(Boolean);
+        const handoutTitles = (item.handoutIds || [])
+          .map((id) => bundle.handouts.find((handout) => handout.id === id)?.title)
+          .filter(Boolean);
+        return `
+          <article class="scene-card">
+            <header><div><p class="eyebrow">${item.type || "场景"}</p><h3>${item.title}</h3></div></header>
+            <p class="muted-copy">${item.summary || "暂无简介"}</p>
+            <div class="key-value compact">
+              <div><strong>氛围</strong><span>${item.atmosphere || "未填写"}</span></div>
+              <div><strong>线索</strong><span>${item.clueNote || "未填写"}</span></div>
+              <div><strong>补救</strong><span>${item.fallback || "未填写"}</span></div>
+              <div><strong>NPC</strong><span>${npcNames.join(" / ") || "未关联"}</span></div>
+              <div><strong>手outs</strong><span>${handoutTitles.join(" / ") || "未关联"}</span></div>
+            </div>
+            <div class="button-row">
+              <button class="action-button" data-edit-entity="${item.id}">编辑</button>
+              <button class="action-button danger" data-delete-entity="${item.id}">删除</button>
+            </div>
+          </article>
+        `;
+      },
+    },
+    clues: {
+      title: "线索",
+      collectionKey: "clues",
+      fields: [
+        { name: "title", label: "线索名", type: "input", required: true },
+        { name: "type", label: "线索类型", type: "input", placeholder: "关键线索 / 关联线索" },
+        { name: "source", label: "来源", type: "input" },
+        { name: "status", label: "状态", type: "select", options: ["未获得", "进行中", "已获得"] },
+        { name: "content", label: "内容", type: "textarea", rows: 3, wide: true },
+        { name: "fallback", label: "备用来源", type: "textarea", rows: 2, wide: true },
+        { name: "leadsTo", label: "导向", type: "input" },
+      ],
+      renderCard(item) {
+        return `
+          <article class="clue-card">
+            <header>
+              <div><p class="eyebrow">${item.type || "线索"}</p><h3>${item.title}</h3></div>
+              <span class="pill ${item.status === "已获得" ? "warning" : item.status === "未获得" ? "danger" : ""}">${item.status || "未获得"}</span>
+            </header>
+            <div class="key-value compact">
+              <div><strong>内容</strong><span>${item.content || "未填写"}</span></div>
+              <div><strong>来源</strong><span>${item.source || "未填写"}</span></div>
+              <div><strong>备用来源</strong><span>${item.fallback || "未填写"}</span></div>
+              <div><strong>导向</strong><span>${item.leadsTo || "未填写"}</span></div>
+            </div>
+            <div class="button-row">
+              <button class="action-button" data-edit-entity="${item.id}">编辑</button>
+              <button class="action-button danger" data-delete-entity="${item.id}">删除</button>
+            </div>
+          </article>
+        `;
+      },
+    },
+    npcs: {
+      title: "NPC",
+      collectionKey: "npcs",
+      fields: [
+        { name: "name", label: "姓名", type: "input", required: true },
+        { name: "role", label: "身份 / 职业", type: "input" },
+        { name: "attitude", label: "当前态度", type: "input" },
+        { name: "publicInfo", label: "公开信息", type: "textarea", rows: 3, wide: true },
+        { name: "secret", label: "隐藏秘密", type: "textarea", rows: 3, wide: true },
+        { name: "motivation", label: "动机", type: "textarea", rows: 2, wide: true },
+        { name: "clue", label: "可透露线索", type: "textarea", rows: 2, wide: true },
+      ],
+      renderCard(item) {
+        return `
+          <article class="npc-card">
+            <header>
+              <div><p class="eyebrow">${item.role || "NPC"}</p><h3>${item.name}</h3></div>
+              <span class="pill">${item.attitude || "未设定"}</span>
+            </header>
+            <div class="key-value compact">
+              <div><strong>公开信息</strong><span>${item.publicInfo || "未填写"}</span></div>
+              <div><strong>秘密</strong><span>${item.secret || "未填写"}</span></div>
+              <div><strong>动机</strong><span>${item.motivation || "未填写"}</span></div>
+              <div><strong>可透露线索</strong><span>${item.clue || "未填写"}</span></div>
+            </div>
+            <div class="button-row">
+              <button class="action-button" data-edit-entity="${item.id}">编辑</button>
+              <button class="action-button danger" data-delete-entity="${item.id}">删除</button>
+            </div>
+          </article>
+        `;
+      },
+    },
+    handouts: {
+      title: "手outs",
+      collectionKey: "handouts",
+      fields: [
+        { name: "title", label: "标题", type: "input", required: true },
+        { name: "type", label: "类型", type: "input", placeholder: "报纸 / 信件 / 档案" },
+        { name: "reveal", label: "揭示时机", type: "textarea", rows: 2, wide: true },
+        { name: "effect", label: "作用", type: "textarea", rows: 3, wide: true },
+      ],
+      renderCard(item) {
+        return `
+          <article class="handout-card">
+            <header><div><p class="eyebrow">${item.type || "手outs"}</p><h3>${item.title}</h3></div></header>
+            <div class="key-value compact">
+              <div><strong>揭示时机</strong><span>${item.reveal || "未填写"}</span></div>
+              <div><strong>作用</strong><span>${item.effect || "未填写"}</span></div>
+            </div>
+            <div class="button-row">
+              <button class="action-button" data-edit-entity="${item.id}">编辑</button>
+              <button class="action-button danger" data-delete-entity="${item.id}">删除</button>
+            </div>
+          </article>
+        `;
+      },
+    },
+  };
+
+  function renderField(field, draft, bundle) {
+    const value = draft[field.name] != null ? draft[field.name] : field.type === "multiselect" ? [] : "";
+
+    if (field.type === "textarea") {
+      return `
+        <label class="${field.wide ? "span-2" : ""}">
+          <span>${field.label}</span>
+          <textarea name="${field.name}" rows="${field.rows || 3}" ${field.required ? "required" : ""}>${value}</textarea>
+        </label>
+      `;
+    }
+
+    if (field.type === "select") {
+      return `
+        <label>
+          <span>${field.label}</span>
+          <select name="${field.name}">
+            ${field.options
+              .map((option) => `<option value="${option}" ${value === option ? "selected" : ""}>${option}</option>`)
+              .join("")}
+          </select>
+        </label>
+      `;
+    }
+
+    if (field.type === "multiselect") {
+      const options = bundle[field.optionKey];
+      return `
+        <fieldset class="entity-multiselect span-2">
+          <legend>${field.label}</legend>
+          <div class="checkbox-grid">
+            ${options
+              .map((option) => {
+                const checked = value.includes(option.id) ? "checked" : "";
+                return `
+                  <label class="checkbox-item">
+                    <input type="checkbox" name="${field.name}" value="${option.id}" ${checked} />
+                    <span>${option[field.optionLabel]}</span>
+                  </label>
+                `;
+              })
+              .join("")}
+          </div>
+        </fieldset>
+      `;
+    }
+
+    return `
+      <label>
+        <span>${field.label}</span>
+        <input name="${field.name}" value="${value}" placeholder="${field.placeholder || ""}" ${field.required ? "required" : ""} />
+      </label>
+    `;
+  }
+
+  function normalizeFormData(form, fields) {
+    const formData = new FormData(form);
+    const output = {};
+    fields.forEach((field) => {
+      output[field.name] = field.type === "multiselect" ? formData.getAll(field.name) : formData.get(field.name) || "";
+    });
+    return output;
+  }
+
+  function renderWorkspace(root, campaign, bundle, editingEntity) {
+    if (!campaign) {
+      root.innerHTML = `
+        <section class="card empty-state">
+          <p class="eyebrow">Workspace</p>
+          <h3 class="section-title">请选择或创建案件</h3>
+          <p class="muted-copy">案件工作台会在这里展示结构化内容和编辑表单。</p>
+        </section>
+      `;
+      return;
+    }
+
+    const config = entityConfig[state.workspaceTab];
+    const collection = config ? bundle[config.collectionKey] : [];
+    const draft =
+      editingEntity ||
+      (state.workspaceTab === "overview"
+        ? campaign
+        : config.fields.reduce((acc, field) => {
+            acc[field.name] = field.type === "multiselect" ? [] : "";
+            return acc;
+          }, {}));
+
+    const listMarkup =
+      state.workspaceTab === "overview"
+        ? `
+        <article class="card">
+          <p class="eyebrow">Campaign Overview</p>
+          <h3 class="section-title">${campaign.title}</h3>
+          <div class="key-value">
+            <div><strong>核心真相</strong><span>${campaign.coreTruth || "未填写"}</span></div>
+            <div><strong>玩家已知</strong><span>${campaign.playerKnowledge || "未填写"}</span></div>
+            <div><strong>玩家误判</strong><span>${campaign.playerMisread || "未填写"}</span></div>
+            <div><strong>下一步建议</strong><span>${campaign.nextSuggestion || "未填写"}</span></div>
+            <div><strong>当前场景</strong><span>${bundle.scenes.find((scene) => scene.id === campaign.currentSceneId)?.title || "未指定"}</span></div>
+          </div>
+        </article>
+      `
+        : collection.length
+        ? collection.map((item) => config.renderCard(item, bundle)).join("")
+        : `<article class="mini-card empty-state"><p class="muted-copy">当前还没有${config.title}，右侧表单可以直接新增。</p></article>`;
+
+    const editorMarkup =
+      state.workspaceTab === "overview"
+        ? `
+        <form id="overview-form" class="entity-form">
+          <label class="span-2"><span>核心真相</span><textarea name="coreTruth" rows="4">${draft.coreTruth || ""}</textarea></label>
+          <label class="span-2"><span>玩家已知</span><textarea name="playerKnowledge" rows="3">${draft.playerKnowledge || ""}</textarea></label>
+          <label class="span-2"><span>玩家误判</span><textarea name="playerMisread" rows="3">${draft.playerMisread || ""}</textarea></label>
+          <label class="span-2"><span>下一步建议</span><textarea name="nextSuggestion" rows="3">${draft.nextSuggestion || ""}</textarea></label>
+          <label class="span-2">
+            <span>当前场景</span>
+            <select name="currentSceneId">
+              <option value="">未指定</option>
+              ${bundle.scenes
+                .map(
+                  (scene) =>
+                    `<option value="${scene.id}" ${campaign.currentSceneId === scene.id ? "selected" : ""}>${scene.title}</option>`
+                )
+                .join("")}
+            </select>
+          </label>
+          <div class="button-row span-2"><button class="action-button primary" type="submit">保存总览信息</button></div>
+        </form>
+      `
+        : `
+        <form id="entity-form" class="entity-form">
+          ${config.fields.map((field) => renderField(field, draft, bundle)).join("")}
+          <div class="button-row span-2">
+            <button type="submit" class="action-button primary">${editingEntity ? "保存修改" : `新增${config.title}`}</button>
+            ${editingEntity ? '<button type="button" id="cancel-entity-edit" class="action-button">取消编辑</button>' : ""}
+          </div>
+        </form>
+      `;
+
+    root.innerHTML = `
+      <section class="card">
+        <p class="eyebrow">Campaign Workspace</p>
+        <h3 class="section-title">${campaign.title}</h3>
+        <div class="tabs">
+          <button class="tab-button ${state.workspaceTab === "overview" ? "active" : ""}" data-tab="overview">总览</button>
+          <button class="tab-button ${state.workspaceTab === "scenes" ? "active" : ""}" data-tab="scenes">场景</button>
+          <button class="tab-button ${state.workspaceTab === "clues" ? "active" : ""}" data-tab="clues">线索</button>
+          <button class="tab-button ${state.workspaceTab === "npcs" ? "active" : ""}" data-tab="npcs">NPC</button>
+          <button class="tab-button ${state.workspaceTab === "handouts" ? "active" : ""}" data-tab="handouts">手outs</button>
+        </div>
+        <div class="workspace-columns">
+          <section><div class="list-stack">${listMarkup}</div></section>
+          <section class="card editor-panel">
+            <p class="eyebrow">${state.workspaceTab === "overview" ? "Overview Editor" : editingEntity ? "Edit Entity" : "New Entity"}</p>
+            <h3 class="section-title">${state.workspaceTab === "overview" ? "编辑案件总览" : editingEntity ? `编辑${config.title}` : `新增${config.title}`}</h3>
+            ${editorMarkup}
+          </section>
+        </div>
+      </section>
+    `;
+
+    root.querySelectorAll("[data-tab]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.workspaceTab = button.dataset.tab;
+        state.editingEntityId = null;
+        renderApp();
+      });
+    });
+
+    if (state.workspaceTab === "overview") {
+      root.querySelector("#overview-form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        upsertCampaign(Object.fromEntries(new FormData(event.currentTarget).entries()), campaign.id);
+        renderApp();
+      });
+      return;
+    }
+
+    root.querySelectorAll("[data-edit-entity]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.editingEntityId = button.dataset.editEntity;
+        renderApp();
+      });
+    });
+
+    root.querySelectorAll("[data-delete-entity]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const label =
+          state.workspaceTab === "scenes" ? "场景" : state.workspaceTab === "clues" ? "线索" : state.workspaceTab === "npcs" ? "NPC" : "手outs";
+        if (!window.confirm(`确定删除这条${label}吗？`)) return;
+        removeEntity(state.workspaceTab, button.dataset.deleteEntity);
+        renderApp();
+      });
+    });
+
+    root.querySelector("#entity-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      upsertEntity(state.workspaceTab, normalizeFormData(event.currentTarget, config.fields), state.editingEntityId);
+      renderApp();
+    });
+
+    const cancelButton = root.querySelector("#cancel-entity-edit");
+    if (cancelButton) {
+      cancelButton.addEventListener("click", () => {
+        state.editingEntityId = null;
+        renderApp();
+      });
+    }
+  }
+
+  function renderRunning(root, campaign, bundle) {
+    if (!campaign) {
+      root.innerHTML = `
+        <section class="card empty-state">
+          <p class="eyebrow">Running Mode</p>
+          <h3 class="section-title">还没有案件</h3>
+          <p class="muted-copy">创建案件后，这里会变成跑团时的快速记录面板。</p>
+        </section>
+      `;
+      return;
+    }
+
+    const currentScene = bundle.scenes.find((scene) => scene.id === campaign.currentSceneId);
+    const activeClues = bundle.clues.filter((item) => item.status !== "已获得");
+
+    root.innerHTML = `
+      <div class="running-grid">
+        <div class="workspace-columns">
+          <section class="card">
+            <p class="eyebrow">Running Mode</p>
+            <h3 class="section-title">当前场景：${currentScene ? currentScene.title : "未指定"}</h3>
+            <div class="key-value">
+              <div><strong>场景简介</strong><span>${currentScene ? currentScene.summary : "请在案件总览中选择当前场景。"}</span></div>
+              <div><strong>氛围</strong><span>${currentScene ? currentScene.atmosphere : "未填写"}</span></div>
+              <div><strong>待推进线索</strong><span>${activeClues.map((item) => item.title).join(" / ") || "无"}</span></div>
+              <div><strong>备用线索提醒</strong><span>${currentScene ? currentScene.fallback : "未填写"}</span></div>
+            </div>
+          </section>
+          <section class="card">
+            <p class="eyebrow">Quick Log</p>
+            <h3 class="section-title">追加本场记录</h3>
+            <form id="running-log-form" class="entity-form single-column">
+              <label class="span-2">
+                <span>记录内容</span>
+                <textarea name="logText" rows="5" placeholder="例如：玩家决定先去法医室施压，希望直接拿到尸检原件。">${state.draftLogText}</textarea>
+              </label>
+              <div class="button-row span-2"><button type="submit" class="action-button primary">写入记录</button></div>
+            </form>
+          </section>
+        </div>
+        <section class="card">
+          <p class="eyebrow">Session Log</p>
+          <h3 class="section-title">本场动态记录</h3>
+          <div class="list-stack">
+            ${
+              bundle.sessionLogs.length
+                ? bundle.sessionLogs
+                    .map(
+                      (entry) => `
+                      <article class="log-card">
+                        <div class="log-card-header">
+                          <strong>${entry.createdAt}</strong>
+                          <button class="list-button danger-text" data-delete-log="${entry.id}">删除</button>
+                        </div>
+                        <p class="muted-copy">${entry.text}</p>
+                      </article>`
+                    )
+                    .join("")
+                : `<article class="log-card"><p class="muted-copy">还没有跑团记录。</p></article>`
+            }
+          </div>
+        </section>
+      </div>
+    `;
+
+    const textarea = root.querySelector('textarea[name="logText"]');
+    textarea.addEventListener("input", (event) => {
+      state.draftLogText = event.target.value;
+    });
+
+    root.querySelector("#running-log-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      addSessionLog(new FormData(event.currentTarget).get("logText") || "");
+      renderApp();
+    });
+
+    root.querySelectorAll("[data-delete-log]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (!window.confirm("确定删除这条跑团记录吗？")) return;
+        data.sessionLogs = data.sessionLogs.filter((item) => item.id !== button.dataset.deleteLog);
+        persist();
+        renderApp();
+      });
+    });
+  }
+
+  function renderHandoutsLibrary(root, handouts) {
+    if (!handouts.length) {
+      root.innerHTML = `
+        <section class="card empty-state">
+          <p class="eyebrow">Handouts</p>
+          <h3 class="section-title">当前案件还没有手outs</h3>
+          <p class="muted-copy">你可以在案件工作台的“手outs”标签中添加线索道具。</p>
+        </section>
+      `;
+      return;
+    }
+
+    root.innerHTML = `
+      <div class="grid cols-3">
+        ${handouts
+          .map(
+            (handout) => `
+            <article class="card handout-card">
+              <header>
+                <div><p class="eyebrow">${handout.type}</p><h3>${handout.title}</h3></div>
+                <span class="pill warning">待展示</span>
+              </header>
+              <div class="key-value">
+                <div><strong>触发条件</strong><span>${handout.reveal}</span></div>
+                <div><strong>场景效果</strong><span>${handout.effect}</span></div>
+              </div>
+              <button class="action-button" style="margin-top: 14px;">在跑团模式中展示</button>
+            </article>`
+          )
+          .join("")}
+      </div>
+    `;
+  }
+
+  function renderReference(root) {
+    root.innerHTML = `
+      <div class="grid cols-3">
+        ${data.reference
+          .map(
+            (item) => `
+            <article class="card">
+              <p class="eyebrow">Quick Reference</p>
+              <h3 class="section-title">${item.title}</h3>
+              <p class="muted-copy">${item.body}</p>
+            </article>`
+          )
+          .join("")}
+      </div>
+    `;
+  }
+
+  function upsertCampaign(payload, campaignId) {
+    if (campaignId) {
+      const target = data.campaigns.find((item) => item.id === campaignId);
+      Object.assign(target, payload);
+    } else {
+      const created = normalizeCampaign({
+        id: makeId("campaign"),
+        ...payload,
+      });
+      data.campaigns.unshift(created);
+      state.currentCampaignId = created.id;
+      state.currentPage = "workspace";
+    }
+    state.editingCampaignId = null;
+    persist();
+  }
+
+  function removeCampaign(campaignId) {
+    data.campaigns = data.campaigns.filter((item) => item.id !== campaignId);
+    data.scenes = data.scenes.filter((item) => item.campaignId !== campaignId);
+    data.clues = data.clues.filter((item) => item.campaignId !== campaignId);
+    data.npcs = data.npcs.filter((item) => item.campaignId !== campaignId);
+    data.handouts = data.handouts.filter((item) => item.campaignId !== campaignId);
+    data.sessionLogs = data.sessionLogs.filter((item) => item.campaignId !== campaignId);
+    state.currentCampaignId = data.campaigns[0] ? data.campaigns[0].id : null;
+    state.editingCampaignId = null;
+    state.editingEntityId = null;
+    persist();
+  }
+
+  function upsertEntity(entityType, payload, entityId) {
+    const collectionName = entityType;
+    const collection = data[collectionName];
+    const defaults =
+      entityType === "scenes"
+        ? { npcIds: [], handoutIds: [] }
+        : entityType === "clues"
+        ? { status: "未获得" }
+        : {};
+
+    if (entityId) {
+      const target = collection.find((item) => item.id === entityId);
+      Object.assign(target, defaults, payload);
+    } else {
+      collection.unshift({
+        id: makeId(entityType.slice(0, -1)),
+        campaignId: state.currentCampaignId,
+        ...defaults,
+        ...payload,
+      });
+    }
+    state.editingEntityId = null;
+    persist();
+  }
+
+  function removeEntity(entityType, entityId) {
+    data[entityType] = data[entityType].filter((item) => item.id !== entityId);
+    if (entityType === "npcs") {
+      data.scenes.forEach((scene) => {
+        scene.npcIds = (scene.npcIds || []).filter((id) => id !== entityId);
+      });
+    }
+    if (entityType === "handouts") {
+      data.scenes.forEach((scene) => {
+        scene.handoutIds = (scene.handoutIds || []).filter((id) => id !== entityId);
+      });
+    }
+    if (entityType === "scenes") {
+      data.campaigns.forEach((campaign) => {
+        if (campaign.currentSceneId === entityId) campaign.currentSceneId = "";
+      });
+    }
+    state.editingEntityId = null;
+    persist();
+  }
+
+  function addSessionLog(text) {
+    if (!String(text).trim()) return;
+    data.sessionLogs.unshift({
+      id: makeId("log"),
+      campaignId: state.currentCampaignId,
+      createdAt: nowLabel(),
+      text: String(text).trim(),
+    });
+    state.draftLogText = "";
+    persist();
+  }
+
+  function downloadTextFile(filename, content) {
+    const blob = new Blob([content], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  const bindings = createLayoutBindings();
+
+  function renderApp() {
+    const campaign = getCampaign();
+    const bundle = getCampaignBundle();
+    const editingCampaign = state.editingCampaignId
+      ? data.campaigns.find((item) => item.id === state.editingCampaignId) || null
+      : null;
+    const entityType =
+      state.workspaceTab === "scenes"
+        ? "scenes"
+        : state.workspaceTab === "clues"
+        ? "clues"
+        : state.workspaceTab === "npcs"
+        ? "npcs"
+        : state.workspaceTab === "handouts"
+        ? "handouts"
+        : null;
+    const editingEntity = entityType && state.editingEntityId ? getEntity(entityType, state.editingEntityId) : null;
+
+    updateLayoutChrome(bindings, campaign, bundle);
+    renderDashboard(bindings.pages.dashboard, campaign, bundle);
+    renderCampaigns(bindings.pages.campaigns, editingCampaign);
+    renderWorkspace(bindings.pages.workspace, campaign, bundle, editingEntity);
+    renderRunning(bindings.pages.running, campaign, bundle);
+    renderHandoutsLibrary(bindings.pages.handouts, bundle.handouts);
+    renderReference(bindings.pages.reference);
+    renderSearchResults(bindings.pages[state.currentPage], campaign, bundle.npcs, bundle.clues, bundle.handouts);
+  }
+
+  bindings.navButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      state.currentPage = button.dataset.page;
+      state.editingCampaignId = null;
+      state.editingEntityId = null;
+      renderApp();
+    });
+  });
+
+  bindings.searchInput.addEventListener("input", (event) => {
+    state.searchQuery = event.target.value;
+    renderApp();
+  });
+
+  bindings.newCampaignButton.addEventListener("click", () => {
+    state.currentPage = "campaigns";
+    state.editingCampaignId = null;
+    state.editingEntityId = null;
+    renderApp();
+  });
+
+  bindings.exportButton.addEventListener("click", () => {
+    downloadTextFile(
+      "coc-kp-helper-export.json",
+      JSON.stringify(
+        {
+          campaigns: data.campaigns,
+          scenes: data.scenes,
+          clues: data.clues,
+          npcs: data.npcs,
+          handouts: data.handouts,
+          sessionLogs: data.sessionLogs,
+        },
+        null,
+        2
+      )
+    );
+  });
+
+  bindings.importButton.addEventListener("click", () => {
+    bindings.importFileInput.click();
+  });
+
+  bindings.importFileInput.addEventListener("change", async (event) => {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const normalized = normalizePersistedData(parsed);
+      data.campaigns = normalized.campaigns;
+      data.scenes = normalized.scenes;
+      data.clues = normalized.clues;
+      data.npcs = normalized.npcs;
+      data.handouts = normalized.handouts;
+      data.sessionLogs = normalized.sessionLogs;
+      data.reference = normalized.reference;
+      state.currentCampaignId = data.campaigns[0] ? data.campaigns[0].id : null;
+      state.currentPage = data.campaigns.length ? "dashboard" : "campaigns";
+      state.workspaceTab = "overview";
+      state.editingCampaignId = null;
+      state.editingEntityId = null;
+      state.searchQuery = "";
+      state.draftLogText = "";
+      persist();
+      renderApp();
+    } catch (error) {
+      window.alert("导入失败：文件格式不正确。");
+    }
+    event.target.value = "";
+  });
+
+  bindings.resetButton.addEventListener("click", () => {
+    if (!window.confirm("恢复示例会覆盖当前本地数据，确定继续吗？")) return;
+    const restored = clone(seedData);
+    data.campaigns = restored.campaigns;
+    data.scenes = restored.scenes;
+    data.clues = restored.clues;
+    data.npcs = restored.npcs;
+    data.handouts = restored.handouts;
+    data.sessionLogs = restored.sessionLogs;
+    data.reference = restored.reference;
+    state.currentCampaignId = restored.campaigns[0].id;
+    state.currentPage = "dashboard";
+    state.workspaceTab = "overview";
+    state.editingCampaignId = null;
+    state.editingEntityId = null;
+    state.searchQuery = "";
+    state.draftLogText = "";
+    persist();
+    renderApp();
+  });
+
+  persist();
+  renderApp();
+})();

@@ -8,8 +8,10 @@ The current frontend is framework-free so it can run without Node tooling, while
 
 - `index.html`
   Static shell and app mount points.
+- `src/app.js`
+  Direct-open runtime entry for browsers loading the app from `file://`.
 - `src/main.js`
-  App entry, event wiring, import/export hooks, and top-level render orchestration.
+  Modular source entry used as the maintainable split version of the frontend logic.
 - `src/data/mock-data.js`
   Seed data used as the initial sample workspace.
 - `src/state/store.js`
@@ -28,6 +30,7 @@ The current frontend is framework-free so it can run without Node tooling, while
 - It gives a clear upgrade path to React, Vue, or another framework later.
 - It keeps the app runnable as a plain static site today.
 - It already supports single-user local CRUD without a backend.
+- It now also supports direct-open usage without depending on ES module loading behavior.
 
 ## Suggested Next Refactors
 
