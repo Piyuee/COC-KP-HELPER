@@ -2,18 +2,18 @@
 
 ## Goal
 
-The first version UI is kept framework-free so it can run without Node tooling, while still using a structure that is easy to grow.
+The current frontend is framework-free so it can run without Node tooling, while still supporting real editing workflows and local persistence.
 
 ## Structure
 
 - `index.html`
   Static shell and app mount points.
 - `src/main.js`
-  App entry, event wiring, and top-level render orchestration.
+  App entry, event wiring, import/export hooks, and top-level render orchestration.
 - `src/data/mock-data.js`
-  Mock campaign data used by the prototype.
+  Seed data used as the initial sample workspace.
 - `src/state/store.js`
-  Small state container for current page, campaign, tab, and search query.
+  UI state, localStorage persistence, CRUD helpers, and import/export logic.
 - `src/ui/layout.js`
   Shared layout bindings and page chrome updates.
 - `src/ui/search.js`
@@ -26,11 +26,12 @@ The first version UI is kept framework-free so it can run without Node tooling, 
 - It removes the single giant script bottleneck.
 - It keeps data, state, and rendering concerns separate.
 - It gives a clear upgrade path to React, Vue, or another framework later.
-- It keeps the prototype runnable as a plain static site today.
+- It keeps the app runnable as a plain static site today.
+- It already supports single-user local CRUD without a backend.
 
 ## Suggested Next Refactors
 
-- Move inline mock strings into typed content objects by feature.
-- Add a form layer for creating and editing campaigns and scenes.
-- Introduce a client-side router when there are more page states.
+- Add validation and richer field types for linked entities.
+- Introduce route-level state when the app moves beyond a single-page layout.
 - Add API adapters once a backend exists.
+- Replace localStorage persistence with a real storage layer when multi-device sync is needed.

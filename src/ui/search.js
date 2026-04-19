@@ -8,7 +8,7 @@ export function renderSearchResults({ root, query, campaign, npcs, clues, handou
     ...npcs.map((npc) => ({ type: "NPC", title: npc.name, body: `${npc.role} · ${npc.publicInfo}` })),
     ...clues.map((clue) => ({ type: "线索", title: clue.title, body: `${clue.source} · ${clue.content}` })),
     ...handouts.map((handout) => ({ type: "手outs", title: handout.title, body: `${handout.type} · ${handout.effect}` })),
-    { type: "案件", title: campaign.title, body: campaign.pitch },
+    ...(campaign ? [{ type: "案件", title: campaign.title, body: campaign.pitch }] : []),
   ].filter((item) => `${item.title} ${item.body}`.toLowerCase().includes(normalizedQuery));
 
   const results = document.createElement("div");

@@ -1,39 +1,52 @@
-export function renderRunning({ root, runningLog }) {
+export function renderRunning({
+  root,
+  campaign,
+  bundle,
+  draftLogText,
+  onDraftLogChange,
+  onAddLog,
+  onRemoveLog,
+}) {
+  if (!campaign) {
+    root.innerHTML = `
+      <section class="card empty-state">
+        <p class="eyebrow">Running Mode</p>
+        <h3 class="section-title">还没有案件</h3>
+        <p class="muted-copy">创建案件后，这里会变成跑团时的快速记录面板。</p>
+      </section>
+    `;
+    return;
+  }
+
+  const currentScene = bundle.scenes.find((scene) => scene.id === campaign.currentSceneId);
+  const activeClues = bundle.clues.filter((item) => item.status !== "已获得");
+
   root.innerHTML = `
     <div class="running-grid">
       <div class="workspace-columns">
         <section class="card">
           <p class="eyebrow">Running Mode</p>
-          <h3 class="section-title">当前场景：六码头仓库</h3>
+          <h3 class="section-title">当前场景：${currentScene?.title || "未指定"}</h3>
           <div class="key-value">
-            <div><strong>当前在场 NPC</strong><span>巡夜警员 / 码头苦力 / 韩管理员</span></div>
-            <div><strong>当前可用线索</strong><span>仓库登记簿假名、装船时间、祭器木箱编号</span></div>
-            <div><strong>风险</strong><span>若玩家闹出动静，密教成员会提前转移祭器并切断后续追踪。</span></div>
-          </div>
-          <div class="three-col" style="margin-top: 18px;">
-            <button class="action-button primary">响应玩家行动</button>
-            <button class="action-button">生成替代线索</button>
-            <button class="action-button">记录本场事件</button>
+            <div><strong>场景简介</strong><span>${currentScene?.summary || "请在案件总览中选择当前场景。"}</span></div>
+            <div><strong>氛围</strong><span>${currentScene?.atmosphere || "未填写"}</span></div>
+            <div><strong>待推进线索</strong><span>${activeClues.map((item) => item.title).join(" / ") || "无"}</span></div>
+            <div><strong>备用线索提醒</strong><span>${currentScene?.fallback || "未填写"}</span></div>
           </div>
         </section>
 
         <section class="card">
-          <p class="eyebrow">Quick Suggestions</p>
-          <h3 class="section-title">现场建议</h3>
-          <div class="timeline">
-            <div class="timeline-item">
-              <strong>如果玩家要潜入</strong>
-              <p class="list-copy">优先给出“聆听 / 潜行 / 侦查”三种切入，不要立刻要求单一检定。</p>
+          <p class="eyebrow">Quick Log</p>
+          <h3 class="section-title">追加本场记录</h3>
+          <form id="running-log-form" class="entity-form single-column">
+            <label class="span-2">
+              <span>记录内容</span>
+              <textarea name="logText" rows="5" placeholder="例如：玩家决定先去法医室施压，希望直接拿到尸检原件。">${draftLogText}</textarea>
+            </label>
+            <div class="button-row span-2">
+              <button type="submit" class="action-button primary">写入记录</button>
             </div>
-            <div class="timeline-item">
-              <strong>如果玩家抓住管理员</strong>
-              <p class="list-copy">他不会直接说出召唤，但会因“船还没到潮位”这句口误暴露时间压力。</p>
-            </div>
-            <div class="timeline-item">
-              <strong>如果玩家撤退</strong>
-              <p class="list-copy">让他们看到一辆深夜驶向法租界的运货车，为下一场追踪留出口。</p>
-            </div>
-          </div>
+          </form>
         </section>
       </div>
 
@@ -41,9 +54,37 @@ export function renderRunning({ root, runningLog }) {
         <p class="eyebrow">Session Log</p>
         <h3 class="section-title">本场动态记录</h3>
         <div class="list-stack">
-          ${runningLog.map((entry) => `<article class="log-card">${entry}</article>`).join("")}
+          ${
+            bundle.sessionLogs.length
+              ? bundle.sessionLogs
+                  .map(
+                    (entry) => `
+                    <article class="log-card">
+                      <div class="log-card-header">
+                        <strong>${entry.createdAt}</strong>
+                        <button class="list-button danger-text" data-delete-log="${entry.id}">删除</button>
+                      </div>
+                      <p class="muted-copy">${entry.text}</p>
+                    </article>
+                  `
+                  )
+                  .join("")
+              : `<article class="log-card"><p class="muted-copy">还没有跑团记录。</p></article>`
+          }
         </div>
       </section>
     </div>
   `;
+
+  const textArea = root.querySelector('textarea[name="logText"]');
+  textArea.addEventListener("input", (event) => onDraftLogChange(event.target.value));
+
+  root.querySelector("#running-log-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    onAddLog(new FormData(event.currentTarget).get("logText") || "");
+  });
+
+  root.querySelectorAll("[data-delete-log]").forEach((button) => {
+    button.addEventListener("click", () => onRemoveLog(button.dataset.deleteLog));
+  });
 }

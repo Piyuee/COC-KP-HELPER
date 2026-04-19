@@ -31,8 +31,8 @@
           <h2 id="sidebar-campaign-title"></h2>
           <p id="sidebar-campaign-summary"></p>
           <div class="status-row">
-            <span class="pill warning">开放线索 4</span>
-            <span class="pill danger">未回收伏笔 3</span>
+            <span id="sidebar-open-clues" class="pill warning">开放线索 0</span>
+            <span id="sidebar-open-threads" class="pill danger">未回收伏笔 0</span>
           </div>
         </section>
 
@@ -54,7 +54,10 @@
             <div class="search-box">
               <input id="global-search" type="search" placeholder="搜索 NPC、线索、地点、手outs..." />
             </div>
-            <button class="ghost-button">新建案件</button>
+            <button id="new-campaign-button" class="ghost-button">新建案件</button>
+            <button id="export-button" class="ghost-button secondary">导出数据</button>
+            <button id="import-button" class="ghost-button secondary">导入数据</button>
+            <button id="reset-button" class="ghost-button secondary">恢复示例</button>
           </div>
         </header>
 
@@ -67,6 +70,7 @@
       </main>
     </div>
 
+    <input id="import-file-input" type="file" accept="application/json" hidden />
     <script type="module" src="./src/main.js"></script>
   </body>
 </html>

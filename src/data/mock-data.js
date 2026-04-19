@@ -9,10 +9,10 @@ export const mockData = {
       coreTruth:
         "真正操控失踪案的不是帮派，而是借航运公司掩护的密教。他们需要在月蚀夜完成一次海上召唤。",
       status: "进行中",
-      sessionCount: 4,
-      openClues: 4,
-      unresolvedThreads: 3,
-      threatLevel: "高",
+      currentSceneId: "dock-six",
+      playerKnowledge: "记者失踪、账簿异常、六码头夜间活动频繁。",
+      playerMisread: "玩家仍将案件理解为走私灭口，而非仪式准备。",
+      nextSuggestion: "准备法医摊牌和仓库潜入的两套节奏，避免玩家过早撞向终局。",
     },
     {
       id: "silent-manor",
@@ -23,50 +23,54 @@ export const mockData = {
       coreTruth:
         "庄园中的回声并非闹鬼，而是祖先留下的仪式装置在模仿死者声音，引导后代继续献祭。",
       status: "草稿",
-      sessionCount: 0,
-      openClues: 0,
-      unresolvedThreads: 0,
-      threatLevel: "中",
+      currentSceneId: "",
+      playerKnowledge: "玩家尚未开始调查。",
+      playerMisread: "无。",
+      nextSuggestion: "先补一条白天探索庄园与一条夜间恐怖演出路径。",
     },
   ],
   scenes: [
     {
       id: "newspaper-office",
+      campaignId: "misty-ledger",
       title: "《晨钟报》编辑部",
       type: "调查",
       summary: "记者最后出现的地方。桌面很整洁，只有被刻意撕走的一页速记本。",
       atmosphere: "昏黄吊灯、油墨味和深夜未散的烟雾，空气里残留着急促离开的痕迹。",
       clueNote: "可找到被压在打字机下的港口仓单编号。",
       fallback: "若玩家没搜到，编辑会在紧张时提到记者最近总去六码头。",
-      npcs: ["许主编", "夜班排字工"],
-      handouts: ["被撕裂的速记页", "仓单副本"],
+      npcIds: ["editor-xu"],
+      handoutIds: ["torn-note"],
     },
     {
       id: "dock-six",
+      campaignId: "misty-ledger",
       title: "六码头仓库",
       type: "潜入",
       summary: "夜里封锁的仓库区，巡逻比平常多，海风里夹着异样腥味。",
       atmosphere: "雾气吞掉远处汽笛声，脚步与海浪回响混杂，仿佛有什么在水下同步呼吸。",
       clueNote: "账簿上的付款对象与仓库登记簿上的假名一致。",
       fallback: "如果没有潜入成功，可从码头苦力口中得知今晚会有秘密装船。",
-      npcs: ["巡夜警员", "码头苦力", "仓库管理员"],
-      handouts: ["仓库登记簿影印件"],
+      npcIds: ["dock-clerk"],
+      handoutIds: ["warehouse-register"],
     },
     {
       id: "forensic-room",
+      campaignId: "misty-ledger",
       title: "租界巡捕房法医室",
       type: "社交",
       summary: "法医表面冷静配合，实际隐瞒了一份与海水腐蚀有关的尸检异常。",
       atmosphere: "金属器械冰冷反光，福尔马林味压得人说话也想压低声音。",
       clueNote: "尸体肺部残留并不符合普通溺亡。",
       fallback: "法医若被识破恐惧，会主动请求保护并交出原始记录。",
-      npcs: ["陈法医"],
-      handouts: ["尸检原始记录"],
+      npcIds: ["chen-coroner"],
+      handoutIds: ["coroner-report"],
     },
   ],
   clues: [
     {
       id: "ledger-payments",
+      campaignId: "misty-ledger",
       title: "异常港口付款记录",
       type: "关键线索",
       source: "《晨钟报》编辑部",
@@ -77,6 +81,7 @@ export const mockData = {
     },
     {
       id: "corroded-lungs",
+      campaignId: "misty-ledger",
       title: "不符合常理的肺部腐蚀",
       type: "关键线索",
       source: "法医室",
@@ -87,6 +92,7 @@ export const mockData = {
     },
     {
       id: "warehouse-alias",
+      campaignId: "misty-ledger",
       title: "仓库登记簿假名",
       type: "关联线索",
       source: "六码头仓库",
@@ -99,6 +105,7 @@ export const mockData = {
   npcs: [
     {
       id: "editor-xu",
+      campaignId: "misty-ledger",
       name: "许主编",
       role: "报社编辑",
       attitude: "警惕但愿意合作",
@@ -109,6 +116,7 @@ export const mockData = {
     },
     {
       id: "chen-coroner",
+      campaignId: "misty-ledger",
       name: "陈法医",
       role: "巡捕房法医",
       attitude: "表面镇定，实际恐惧",
@@ -119,6 +127,7 @@ export const mockData = {
     },
     {
       id: "dock-clerk",
+      campaignId: "misty-ledger",
       name: "韩管理员",
       role: "仓库管理员",
       attitude: "敌对",
@@ -130,28 +139,49 @@ export const mockData = {
   ],
   handouts: [
     {
+      id: "torn-note",
+      campaignId: "misty-ledger",
       title: "被撕裂的速记页",
       type: "纸质线索",
       reveal: "编辑部搜查成功时",
       effect: "让玩家意识到记者不是随意失踪，而是已经接近某个名单。",
     },
     {
+      id: "coroner-report",
+      campaignId: "misty-ledger",
       title: "尸检原始记录",
       type: "医疗档案",
       reveal: "说服或威压法医后",
       effect: "把调查从普通谋杀转向异常仪式与海上活动。",
     },
     {
+      id: "warehouse-register",
+      campaignId: "misty-ledger",
       title: "仓库登记簿影印件",
       type: "记录文书",
       reveal: "潜入仓库或贿赂苦力后",
       effect: "建立假名、账簿和仓库的关联。",
     },
   ],
-  runningLog: [
-    "玩家已确认记者最后一次公开露面在《晨钟报》编辑部。",
-    "他们怀疑法医隐瞒尸检结论，但尚未提出直接威胁。",
-    "当前最危险的选择是今晚直接前往六码头仓库。",
+  sessionLogs: [
+    {
+      id: "log-1",
+      campaignId: "misty-ledger",
+      createdAt: "2026-04-19 19:00",
+      text: "玩家已确认记者最后一次公开露面在《晨钟报》编辑部。",
+    },
+    {
+      id: "log-2",
+      campaignId: "misty-ledger",
+      createdAt: "2026-04-19 19:40",
+      text: "他们怀疑法医隐瞒尸检结论，但尚未提出直接威胁。",
+    },
+    {
+      id: "log-3",
+      campaignId: "misty-ledger",
+      createdAt: "2026-04-19 20:15",
+      text: "当前最危险的选择是今晚直接前往六码头仓库。",
+    },
   ],
   reference: [
     {

@@ -4,6 +4,10 @@ A product planning starter repository for a Call of Cthulhu 7th Edition Keeper a
 
 COC 7版守秘人辅助应用的产品规划起始仓库。
 
+The repository now includes a usable static frontend that supports local editing and persistence.
+
+这个仓库现在已经包含一个可直接使用的静态前端版本，支持本地编辑和持久化保存。
+
 ## Goal
 
 COC KP Helper is designed to help Keepers:
@@ -30,6 +34,8 @@ COC KP Helper 的目标是帮助守秘人：
 - `docs/mvp-spec.md` - MVP scope, priorities, and core flows
 - `docs/data-model.md` - initial relational data model proposal
 - `docs/frontend-architecture.md` - frontend structure and refactor notes
+- `docs/产品介绍手册.md` - Chinese product handbook
+- `docs/使用手册.md` - Chinese user manual
 
 - `index.html` - 第一版页面的静态入口
 - `src/main.js` - 前端入口与渲染调度
@@ -37,6 +43,8 @@ COC KP Helper 的目标是帮助守秘人：
 - `docs/mvp-spec.md` - MVP 范围、优先级和核心流程
 - `docs/data-model.md` - 初版关系型数据模型设计
 - `docs/frontend-architecture.md` - 前端结构与重构说明
+- `docs/产品介绍手册.md` - 中文产品介绍手册
+- `docs/使用手册.md` - 中文使用手册
 
 ## Planned MVP
 
@@ -55,6 +63,22 @@ COC KP Helper 的目标是帮助守秘人：
 - 手outs 管理
 - 跑团模式
 - 核心实体搜索
+
+## How To Use
+
+1. Open `index.html` directly in a browser, or serve the repo with a simple static server.
+2. Create a campaign from the top-right `新建案件` button.
+3. Use the workspace tabs to maintain scenes, clues, NPCs, and handouts.
+4. Use `跑团模式` to append session notes during play.
+5. Export your data regularly as JSON.
+
+## 如何使用
+
+1. 直接用浏览器打开 `index.html`，或用简单静态服务运行仓库。
+2. 点击右上角 `新建案件` 创建案件。
+3. 在案件工作台里维护场景、线索、NPC 和手outs。
+4. 在 `跑团模式` 中记录跑团过程。
+5. 记得定期导出 JSON 备份。
 
 ## Next Steps
 
