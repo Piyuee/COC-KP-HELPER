@@ -574,6 +574,19 @@ select {
   border-top: 1px dashed rgba(31, 27, 24, 0.12);
 }
 
+.relation-editor {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(125, 47, 47, 0.12);
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(248, 242, 234, 0.9), rgba(255, 252, 246, 0.95));
+}
+
+.relation-editor fieldset {
+  background: rgba(255, 253, 250, 0.88);
+}
+
 .relation-empty {
   border: 1px dashed rgba(31, 27, 24, 0.16);
   border-radius: 14px;

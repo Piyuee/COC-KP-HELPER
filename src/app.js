@@ -645,6 +645,11 @@
     return "";
   }
 
+  function getRelationNodeTitle(type, entity) {
+    if (!entity) return "";
+    return type === "npc" ? entity.name : entity.title;
+  }
+
   function getFocusBadge(type, entity) {
     if (!entity) return "";
     if (type === "scene") return entity.type || "场景";
@@ -652,6 +657,146 @@
     if (type === "npc") return entity.role || "NPC";
     if (type === "clueProp") return entity.type || "线索道具";
     return "";
+  }
+
+  function renderRelationEditor(bundle, focus, entity) {
+    if (!entity || !focus) return "";
+
+    if (focus.type === "scene") {
+      return `
+        <form class="relation-editor" data-relation-editor="true">
+          <div class="relation-detail-group-head">
+            <strong>快速调整关联</strong>
+            <span class="relation-count">场景关系</span>
+          </div>
+          <fieldset class="entity-multiselect">
+            <legend>关联线索</legend>
+            <div class="checkbox-grid">
+              ${
+                bundle.clues.length
+                  ? bundle.clues
+                      .map(
+                        (clue) => `
+                        <label class="checkbox-item">
+                          <input type="checkbox" name="clueIds" value="${clue.id}" ${(entity.clueIds || []).includes(clue.id) ? "checked" : ""} />
+                          <span>${clue.title}</span>
+                        </label>`
+                      )
+                      .join("")
+                  : `<p class="relation-empty span-2">当前还没有线索。</p>`
+              }
+            </div>
+          </fieldset>
+          <fieldset class="entity-multiselect">
+            <legend>关联 NPC</legend>
+            <div class="checkbox-grid">
+              ${
+                bundle.npcs.length
+                  ? bundle.npcs
+                      .map(
+                        (npc) => `
+                        <label class="checkbox-item">
+                          <input type="checkbox" name="npcIds" value="${npc.id}" ${(entity.npcIds || []).includes(npc.id) ? "checked" : ""} />
+                          <span>${npc.name}</span>
+                        </label>`
+                      )
+                      .join("")
+                  : `<p class="relation-empty span-2">当前还没有 NPC。</p>`
+              }
+            </div>
+          </fieldset>
+          <fieldset class="entity-multiselect">
+            <legend>关联线索道具</legend>
+            <div class="checkbox-grid">
+              ${
+                bundle.clueProps.length
+                  ? bundle.clueProps
+                      .map(
+                        (clueProp) => `
+                        <label class="checkbox-item">
+                          <input type="checkbox" name="cluePropIds" value="${clueProp.id}" ${(entity.cluePropIds || []).includes(clueProp.id) ? "checked" : ""} />
+                          <span>${clueProp.title}</span>
+                        </label>`
+                      )
+                      .join("")
+                  : `<p class="relation-empty span-2">当前还没有线索道具。</p>`
+              }
+            </div>
+          </fieldset>
+          <div class="button-row tight">
+            <button type="submit" class="action-button primary">保存关系调整</button>
+          </div>
+        </form>
+      `;
+    }
+
+    const sceneIds =
+      focus.type === "clue"
+        ? bundle.scenes.filter((scene) => (scene.clueIds || []).includes(entity.id)).map((scene) => scene.id)
+        : focus.type === "npc"
+        ? bundle.scenes.filter((scene) => (scene.npcIds || []).includes(entity.id)).map((scene) => scene.id)
+        : bundle.scenes.filter((scene) => (scene.cluePropIds || []).includes(entity.id)).map((scene) => scene.id);
+
+    return `
+      <form class="relation-editor" data-relation-editor="true">
+        <div class="relation-detail-group-head">
+          <strong>快速调整挂接场景</strong>
+          <span class="relation-count">${sceneIds.length}</span>
+        </div>
+        <fieldset class="entity-multiselect">
+          <legend>当前节点出现在哪些场景</legend>
+          <div class="checkbox-grid">
+            ${
+              bundle.scenes.length
+                ? bundle.scenes
+                    .map(
+                      (scene) => `
+                      <label class="checkbox-item">
+                        <input type="checkbox" name="sceneIds" value="${scene.id}" ${sceneIds.includes(scene.id) ? "checked" : ""} />
+                        <span>${scene.title}</span>
+                      </label>`
+                    )
+                    .join("")
+                : `<p class="relation-empty span-2">当前还没有场景。</p>`
+            }
+          </div>
+        </fieldset>
+        <p class="small-copy">保存后，这个${getRelationNodeMeta(focus.type).title}会被批量挂接到你勾选的场景里。</p>
+        <div class="button-row tight">
+          <button type="submit" class="action-button primary">保存挂接关系</button>
+        </div>
+      </form>
+    `;
+  }
+
+  function applyRelationBoardUpdate(bundle, focus, form) {
+    const entity = getRelationEntity(bundle, focus);
+    if (!entity) return;
+
+    const formData = new FormData(form);
+
+    if (focus.type === "scene") {
+      entity.clueIds = formData.getAll("clueIds");
+      entity.npcIds = formData.getAll("npcIds");
+      entity.cluePropIds = formData.getAll("cluePropIds");
+      persist();
+      setFlash(`已更新场景「${entity.title}」的关联关系。`, "success");
+      return;
+    }
+
+    const selectedSceneIds = new Set(formData.getAll("sceneIds"));
+    bundle.scenes.forEach((scene) => {
+      const key = focus.type === "clue" ? "clueIds" : focus.type === "npc" ? "npcIds" : "cluePropIds";
+      const currentIds = new Set(scene[key] || []);
+      if (selectedSceneIds.has(scene.id)) {
+        currentIds.add(entity.id);
+      } else {
+        currentIds.delete(entity.id);
+      }
+      scene[key] = [...currentIds];
+    });
+    persist();
+    setFlash(`已更新${getRelationNodeMeta(focus.type).title}「${getRelationNodeTitle(focus.type, entity)}」的场景挂接。`, "success");
   }
 
   function getRelationFocus(bundle, campaign) {
@@ -817,6 +962,7 @@
                 跳到对应编辑项
               </button>
             </div>
+            ${renderRelationEditor(bundle, focus, entity)}
             <div class="relation-group-list">
               ${groups
                 .map(
@@ -1445,6 +1591,17 @@
           renderApp();
         });
       });
+
+      const relationEditor = root.querySelector("[data-relation-editor]");
+      if (relationEditor) {
+        relationEditor.addEventListener("submit", (event) => {
+          event.preventDefault();
+          const focus = getRelationFocus(bundle, campaign);
+          if (!focus) return;
+          applyRelationBoardUpdate(bundle, focus, event.currentTarget);
+          renderApp();
+        });
+      }
 
       root.querySelector("#overview-form").addEventListener("submit", (event) => {
         event.preventDefault();
