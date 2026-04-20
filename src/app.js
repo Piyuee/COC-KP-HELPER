@@ -1369,9 +1369,9 @@
                   <p class="campaign-meta">${campaign.pitch}</p>
                   <div class="chip-row"><span class="chip">${campaign.theme}</span></div>
                   <div class="button-row">
-                    <button class="action-button primary" data-open="${campaign.id}">打开</button>
-                    <button class="action-button" data-edit="${campaign.id}">编辑</button>
-                    <button class="action-button danger" data-delete="${campaign.id}">删除</button>
+                    <button type="button" class="action-button primary" data-open="${campaign.id}">打开</button>
+                    <button type="button" class="action-button" data-edit="${campaign.id}">编辑</button>
+                    <button type="button" class="action-button danger" data-delete="${campaign.id}">删除</button>
                   </div>
                 </article>`
               )
@@ -1480,8 +1480,8 @@
               <div><strong>线索道具</strong><span>${cluePropTitles.join(" / ") || "未关联"}</span></div>
             </div>
             <div class="button-row">
-              <button class="action-button" data-edit-entity="${item.id}">编辑</button>
-              <button class="action-button danger" data-delete-entity="${item.id}">删除</button>
+              <button type="button" class="action-button" data-edit-entity="${item.id}">编辑</button>
+              <button type="button" class="action-button danger" data-delete-entity="${item.id}">删除</button>
             </div>
           </article>
         `;
@@ -1513,8 +1513,8 @@
               <div><strong>导向</strong><span>${item.leadsTo || "未填写"}</span></div>
             </div>
             <div class="button-row">
-              <button class="action-button" data-edit-entity="${item.id}">编辑</button>
-              <button class="action-button danger" data-delete-entity="${item.id}">删除</button>
+              <button type="button" class="action-button" data-edit-entity="${item.id}">编辑</button>
+              <button type="button" class="action-button danger" data-delete-entity="${item.id}">删除</button>
             </div>
           </article>
         `;
@@ -1546,8 +1546,8 @@
               <div><strong>可透露线索</strong><span>${item.clue || "未填写"}</span></div>
             </div>
             <div class="button-row">
-              <button class="action-button" data-edit-entity="${item.id}">编辑</button>
-              <button class="action-button danger" data-delete-entity="${item.id}">删除</button>
+              <button type="button" class="action-button" data-edit-entity="${item.id}">编辑</button>
+              <button type="button" class="action-button danger" data-delete-entity="${item.id}">删除</button>
             </div>
           </article>
         `;
@@ -1575,8 +1575,8 @@
             </div>
             ${renderCluePropPreview(item)}
             <div class="button-row">
-              <button class="action-button" data-edit-entity="${item.id}">编辑</button>
-              <button class="action-button danger" data-delete-entity="${item.id}">删除</button>
+              <button type="button" class="action-button" data-edit-entity="${item.id}">编辑</button>
+              <button type="button" class="action-button danger" data-delete-entity="${item.id}">删除</button>
             </div>
           </article>
         `;
@@ -1749,11 +1749,11 @@
         <p class="eyebrow">Campaign Workspace</p>
         <h3 class="section-title">${campaign.title}</h3>
         <div class="tabs">
-          <button class="tab-button ${state.workspaceTab === "overview" ? "active" : ""}" data-tab="overview">总览</button>
-          <button class="tab-button ${state.workspaceTab === "scenes" ? "active" : ""}" data-tab="scenes">场景</button>
-          <button class="tab-button ${state.workspaceTab === "clues" ? "active" : ""}" data-tab="clues">线索</button>
-          <button class="tab-button ${state.workspaceTab === "npcs" ? "active" : ""}" data-tab="npcs">NPC</button>
-          <button class="tab-button ${state.workspaceTab === "clueProps" ? "active" : ""}" data-tab="clueProps">线索道具</button>
+          <button type="button" class="tab-button ${state.workspaceTab === "overview" ? "active" : ""}" data-tab="overview">总览</button>
+          <button type="button" class="tab-button ${state.workspaceTab === "scenes" ? "active" : ""}" data-tab="scenes">场景</button>
+          <button type="button" class="tab-button ${state.workspaceTab === "clues" ? "active" : ""}" data-tab="clues">线索</button>
+          <button type="button" class="tab-button ${state.workspaceTab === "npcs" ? "active" : ""}" data-tab="npcs">NPC</button>
+          <button type="button" class="tab-button ${state.workspaceTab === "clueProps" ? "active" : ""}" data-tab="clueProps">线索道具</button>
         </div>
         <div class="workspace-columns">
           <section><div class="list-stack">${listMarkup}</div></section>
@@ -1955,7 +1955,7 @@
                       <article class="log-card">
                         <div class="log-card-header">
                           <strong>${entry.createdAt}</strong>
-                          <button class="list-button danger-text" data-delete-log="${entry.id}">删除</button>
+                          <button type="button" class="list-button danger-text" data-delete-log="${entry.id}">删除</button>
                         </div>
                         <p class="muted-copy">${entry.text}</p>
                       </article>`
@@ -2138,10 +2138,10 @@
                                 <p class="muted-copy">${entry.usageNote || "未填写使用说明。"}</p>
                                 <div class="scene-description-body">${entry.content || "未填写正文。"}</div>
                                 <div class="button-row">
-                                  <button class="action-button" data-move-scene-description="${entry.id}" data-direction="up">上移</button>
-                                  <button class="action-button" data-move-scene-description="${entry.id}" data-direction="down">下移</button>
-                                  <button class="action-button" data-edit-scene-description="${entry.id}">编辑</button>
-                                  <button class="action-button danger" data-delete-scene-description="${entry.id}">删除</button>
+                                  <button type="button" class="action-button" data-move-scene-description="${entry.id}" data-direction="up">上移</button>
+                                  <button type="button" class="action-button" data-move-scene-description="${entry.id}" data-direction="down">下移</button>
+                                  <button type="button" class="action-button" data-edit-scene-description="${entry.id}">编辑</button>
+                                  <button type="button" class="action-button danger" data-delete-scene-description="${entry.id}">删除</button>
                                 </div>
                               </article>
                             `

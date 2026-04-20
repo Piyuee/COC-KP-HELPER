@@ -82,6 +82,20 @@ COC KP Helper 的目标是帮助守秘人：
 4. 在 `跑团模式` 中记录跑团过程。
 5. 记得定期导出 JSON 备份。
 
+## Link Audit
+
+Run this command to check clickable bindings and local links:
+
+```bash
+node scripts/link-audit.js
+```
+
+可以用这条命令检查可点击入口是否已绑定、以及本地文档链接是否有效：
+
+```bash
+node scripts/link-audit.js
+```
+
 ## Next Steps
 
 1. Confirm product scope and MVP boundaries.
