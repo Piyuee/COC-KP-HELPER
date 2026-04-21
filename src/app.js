@@ -1,5 +1,6 @@
 (function () {
   const STORAGE_KEY = "coc-kp-helper-data-v1";
+  const EXPORT_SCHEMA_VERSION = 2;
   const LEGACY_KEYS = {
     clueProps: "handouts",
     cluePropIds: "handoutIds",
@@ -164,6 +165,11 @@
         title: "被撕裂的速记页",
         type: "纸质线索",
         template: "私人信件",
+        isFavorite: true,
+        tags: ["开场", "证据", "编辑部"],
+        insertText: "速记页写着：六码头 17 号仓，假名登记，深色雨衣。",
+        usageCount: 1,
+        lastUsedAt: "2026-04-19 19:10",
         reveal: "编辑部搜查成功时",
         effect: "让玩家意识到记者不是随意失踪，而是已经接近某个名单。",
         contentText:
@@ -175,6 +181,11 @@
         title: "尸检原始记录",
         type: "医疗档案",
         template: "医疗报告",
+        isFavorite: false,
+        tags: ["法医室", "尸检", "关键线索"],
+        insertText: "法医原件显示：死者肺部并非普通溺亡，疑似清醒状态接触高盐水。",
+        usageCount: 0,
+        lastUsedAt: "",
         reveal: "说服或威压法医后",
         effect: "把调查从普通谋杀转向异常仪式与海上活动。",
         contentText:
@@ -186,6 +197,11 @@
         title: "仓库登记簿影印件",
         type: "记录文书",
         template: "档案记录",
+        isFavorite: false,
+        tags: ["码头", "仓库", "假名"],
+        insertText: "登记簿记载：4月17日夜班入库，假名“周启仁”，午夜前不得开封。",
+        usageCount: 0,
+        lastUsedAt: "",
         reveal: "潜入仓库或贿赂苦力后",
         effect: "建立假名、账簿和仓库的关联。",
         contentText:
@@ -387,6 +403,10 @@
     editingReferenceSectionIndex: null,
     editingReferenceItemIndex: null,
     draftLogText: "",
+    cluePropLibraryQuery: "",
+    cluePropLibraryTemplateFilter: "",
+    cluePropLibraryTagFilter: "",
+    cluePropLibraryFavoritesOnly: false,
     flashMessage: null,
     relationFocus: null,
   };
@@ -402,6 +422,17 @@
   function nowLabel() {
     const date = new Date();
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+  }
+
+  function normalizeTagList(value) {
+    if (Array.isArray(value)) {
+      return [...new Set(value.map((item) => String(item || "").trim()).filter(Boolean))];
+    }
+    return [...new Set(String(value || "").split(/[,\n，]/).map((item) => item.trim()).filter(Boolean))];
+  }
+
+  function toTagListText(value) {
+    return normalizeTagList(value).join(", ");
   }
 
   function normalizeCampaign(campaign) {
@@ -474,12 +505,22 @@
         title: "",
         type: "",
         template: "通用纸张",
+        isFavorite: false,
+        tags: [],
+        insertText: "",
+        usageCount: 0,
+        lastUsedAt: "",
         reveal: "",
         effect: "",
         contentText: "",
       }).map((clueProp) => ({
         ...clueProp,
         template: inferCluePropTemplate(clueProp),
+        isFavorite: Boolean(clueProp.isFavorite),
+        tags: normalizeTagList(clueProp.tags),
+        insertText: String(clueProp.insertText || ""),
+        usageCount: Math.max(0, Number(clueProp.usageCount) || 0),
+        lastUsedAt: String(clueProp.lastUsedAt || ""),
       })),
       sceneDescriptions: normalizeEntityList(raw.sceneDescriptions || seed.sceneDescriptions, firstCampaignId, "sceneDescription", {
         title: "",
@@ -537,6 +578,7 @@
     window.localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
+        schemaVersion: EXPORT_SCHEMA_VERSION,
         campaigns: data.campaigns,
         scenes: data.scenes,
         clues: data.clues,
@@ -641,6 +683,162 @@
     return `${names.slice(0, 3).join(" / ")} 等 ${names.length} 项`;
   }
 
+  function createHealthIssue(payload) {
+    return {
+      level: "suggestion",
+      jumpPage: "workspace",
+      jumpTab: "overview",
+      jumpEntityId: "",
+      ...payload,
+    };
+  }
+
+  function getHealthLevelLabel(level) {
+    return {
+      high: "高风险",
+      medium: "中风险",
+      suggestion: "建议优化",
+    }[level || "suggestion"];
+  }
+
+  function getHealthLevelClass(level) {
+    return {
+      high: "high-risk",
+      medium: "medium-risk",
+      suggestion: "suggestion-risk",
+    }[level || "suggestion"];
+  }
+
+  function ensureDraftGap(text) {
+    if (!state.draftLogText.trim()) {
+      state.draftLogText = text;
+      return;
+    }
+    state.draftLogText = `${state.draftLogText.trim()}\n\n${text}`;
+  }
+
+  function getCluePropById(cluePropId) {
+    return data.clueProps.find((item) => item.id === cluePropId) || null;
+  }
+
+  function markCluePropUsed(cluePropId, options = {}) {
+    const clueProp = getCluePropById(cluePropId);
+    if (!clueProp) return;
+    clueProp.usageCount = Math.max(0, Number(clueProp.usageCount) || 0) + 1;
+    clueProp.lastUsedAt = nowLabel();
+    if (options.persistNow !== false) persist();
+  }
+
+  function toggleCluePropFavorite(cluePropId) {
+    const clueProp = getCluePropById(cluePropId);
+    if (!clueProp) return;
+    clueProp.isFavorite = !clueProp.isFavorite;
+    persist();
+    setFlash(clueProp.isFavorite ? `已收藏线索道具「${clueProp.title}」。` : `已取消收藏「${clueProp.title}」。`, "success");
+  }
+
+  function appendCluePropToDraftLog(cluePropId) {
+    const clueProp = getCluePropById(cluePropId);
+    if (!clueProp) return;
+    const body = String(clueProp.insertText || clueProp.contentText || clueProp.effect || "").trim();
+    const text = body ? `【线索道具：${clueProp.title}】\n${body}` : `【线索道具：${clueProp.title}】`;
+    ensureDraftGap(text);
+    setFlash(`已把「${clueProp.title}」插入跑团记录草稿。`, "success");
+  }
+
+  async function copyTextToClipboard(text) {
+    const payload = String(text || "").trim();
+    if (!payload) return false;
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+        await navigator.clipboard.writeText(payload);
+        return true;
+      }
+    } catch (error) {
+      // Fallback to legacy copy path below.
+    }
+
+    const textarea = document.createElement("textarea");
+    textarea.value = payload;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "absolute";
+    textarea.style.left = "-9999px";
+    document.body.appendChild(textarea);
+    textarea.select();
+    const success = document.execCommand("copy");
+    document.body.removeChild(textarea);
+    return Boolean(success);
+  }
+
+  function handleHealthIssueJump(target) {
+    const page = target.page || "workspace";
+    const tab = target.tab || "overview";
+    const entityId = target.entityId || "";
+
+    state.currentPage = page;
+    state.searchQuery = "";
+
+    if (page === "workspace") {
+      state.workspaceTab = tab;
+      state.editingEntityId = entityId || null;
+    } else if (page === "sceneDescriptions") {
+      state.editingSceneDescriptionId = null;
+    }
+
+    renderApp();
+  }
+
+  function bindHealthIssueActions(root) {
+    root.querySelectorAll("[data-health-jump-tab]").forEach((button) => {
+      button.addEventListener("click", () => {
+        handleHealthIssueJump({
+          page: button.dataset.healthJumpPage || "workspace",
+          tab: button.dataset.healthJumpTab || "overview",
+          entityId: button.dataset.healthJumpId || "",
+        });
+      });
+    });
+  }
+
+  function bindCluePropActionButtons(root, options = {}) {
+    const rerender = options.rerender !== false;
+
+    root.querySelectorAll("[data-toggle-clue-prop-favorite][data-clue-prop-id]").forEach((button) => {
+      button.addEventListener("click", () => {
+        toggleCluePropFavorite(button.dataset.cluePropId);
+        if (rerender) renderApp();
+      });
+    });
+
+    root.querySelectorAll("[data-copy-clue-prop-content][data-clue-prop-id]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const clueProp = getCluePropById(button.dataset.cluePropId);
+        if (!clueProp) return;
+        const text = String(clueProp.contentText || clueProp.insertText || clueProp.effect || "").trim();
+        const success = await copyTextToClipboard(text);
+        setFlash(success ? `已复制「${clueProp.title}」正文。` : "复制失败，请改用手动复制。", success ? "success" : "warning");
+        if (rerender) renderApp();
+      });
+    });
+
+    root.querySelectorAll("[data-insert-clue-prop-log][data-clue-prop-id]").forEach((button) => {
+      button.addEventListener("click", () => {
+        appendCluePropToDraftLog(button.dataset.cluePropId);
+        if (rerender) renderApp();
+      });
+    });
+
+    root.querySelectorAll("[data-mark-clue-prop-used][data-clue-prop-id]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const clueProp = getCluePropById(button.dataset.cluePropId);
+        if (!clueProp) return;
+        markCluePropUsed(clueProp.id, { persistNow: true });
+        setFlash(`已标记「${clueProp.title}」为已使用。`, "success");
+        if (rerender) renderApp();
+      });
+    });
+  }
+
   function inferCluePropTemplate(clueProp) {
     const template = String(clueProp.template || "").trim();
     if (template) return template;
@@ -732,47 +930,96 @@
     const scenesByKeyClue = new Map(
       keyClues.map((clue) => [clue.id, bundle.scenes.filter((scene) => (scene.clueIds || []).includes(clue.id))])
     );
+    const currentScene = campaign.currentSceneId ? bundle.scenes.find((scene) => scene.id === campaign.currentSceneId) || null : null;
 
     if (!bundle.scenes.length) {
-      issues.push({ title: "没有场景", body: "建议至少建立 2 到 3 个核心调查场景，避免案件结构过空。" });
+      issues.push(
+        createHealthIssue({
+          title: "没有场景",
+          body: "建议至少建立 2 到 3 个核心调查场景，避免案件结构过空。",
+          level: "high",
+          jumpTab: "scenes",
+        })
+      );
     }
     if (!bundle.clues.length) {
-      issues.push({ title: "没有线索", body: "当前案件还没有任何线索，玩家会缺少推进调查的抓手。" });
+      issues.push(
+        createHealthIssue({
+          title: "没有线索",
+          body: "当前案件还没有任何线索，玩家会缺少推进调查的抓手。",
+          level: "high",
+          jumpTab: "clues",
+        })
+      );
     }
-    if (campaign.currentSceneId && !bundle.scenes.some((scene) => scene.id === campaign.currentSceneId)) {
-      issues.push({ title: "当前场景失效", body: "当前场景指向了一个不存在的场景，建议重新指定跑团入口。" });
-    } else if (!campaign.currentSceneId) {
-      issues.push({ title: "未指定当前场景", body: "跑团模式更依赖当前场景，建议在总览里先指定一个。" });
+    if (campaign.currentSceneId && !currentScene) {
+      issues.push(
+        createHealthIssue({
+          title: "当前场景失效",
+          body: "当前场景指向了一个不存在的场景，建议重新指定跑团入口。",
+          level: "high",
+          jumpTab: "overview",
+        })
+      );
+    } else if (!campaign.currentSceneId && bundle.scenes.length) {
+      issues.push(
+        createHealthIssue({
+          title: "未指定当前场景",
+          body: "案件已有场景但还没指定跑团入口，建议先设定当前场景。",
+          level: "high",
+          jumpTab: "overview",
+        })
+      );
     }
     if (keyClues.length === 1) {
-      issues.push({
-        title: "仅有一条关键线索",
-        body: `当前只有「${keyClues[0].title}」被标记为关键线索，建议至少再准备一条主推进抓手。`,
-      });
+      issues.push(
+        createHealthIssue({
+          title: "仅有一条关键线索",
+          body: `当前只有「${keyClues[0].title}」被标记为关键线索，建议至少再准备一条主推进抓手。`,
+          level: "medium",
+          jumpTab: "clues",
+          jumpEntityId: keyClues[0].id,
+        })
+      );
     }
 
     const missingFallbackKeyClues = keyClues.filter((item) => !String(item.fallback || "").trim());
     if (missingFallbackKeyClues.length) {
-      issues.push({
-        title: "关键线索缺少补救",
-        body: `这些关键线索目前还没有备用来源：${formatEntityList(missingFallbackKeyClues, "title")}。`,
-      });
+      issues.push(
+        createHealthIssue({
+          title: "关键线索缺少补救",
+          body: `这些关键线索目前还没有备用来源：${formatEntityList(missingFallbackKeyClues, "title")}。`,
+          level: "high",
+          jumpTab: "clues",
+          jumpEntityId: missingFallbackKeyClues[0].id,
+        })
+      );
     }
 
     const unlinkedKeyClues = keyClues.filter((item) => !(scenesByKeyClue.get(item.id) || []).length);
     if (unlinkedKeyClues.length) {
-      issues.push({
-        title: "关键线索未落到场景",
-        body: `这些关键线索还没有挂到具体场景：${formatEntityList(unlinkedKeyClues, "title")}。`,
-      });
+      issues.push(
+        createHealthIssue({
+          title: "关键线索未落到场景",
+          body: `这些关键线索还没有挂到具体场景：${formatEntityList(unlinkedKeyClues, "title")}。`,
+          level: "high",
+          jumpTab: "clues",
+          jumpEntityId: unlinkedKeyClues[0].id,
+        })
+      );
     }
 
     const keyCluesWithoutLead = keyClues.filter((item) => !String(item.leadsTo || "").trim());
     if (keyCluesWithoutLead.length) {
-      issues.push({
-        title: "关键线索缺少导向",
-        body: `这些关键线索还没有说明会把调查带向哪里：${formatEntityList(keyCluesWithoutLead, "title")}。`,
-      });
+      issues.push(
+        createHealthIssue({
+          title: "关键线索缺少导向",
+          body: `这些关键线索还没有说明会把调查带向哪里：${formatEntityList(keyCluesWithoutLead, "title")}。`,
+          level: "medium",
+          jumpTab: "clues",
+          jumpEntityId: keyCluesWithoutLead[0].id,
+        })
+      );
     }
 
     const keyClueSceneSet = new Set(
@@ -780,28 +1027,43 @@
     );
     if (keyClues.length >= 2 && keyClueSceneSet.size === 1) {
       const onlyScene = bundle.scenes.find((scene) => scene.id === [...keyClueSceneSet][0]);
-      issues.push({
-        title: "关键线索过度集中",
-        body: `多条关键线索都集中在「${onlyScene?.title || "同一场景"}」，建议分散到不同调查入口。`,
-      });
+      issues.push(
+        createHealthIssue({
+          title: "关键线索过度集中",
+          body: `多条关键线索都集中在「${onlyScene?.title || "同一场景"}」，建议分散到不同调查入口。`,
+          level: "suggestion",
+          jumpTab: "scenes",
+          jumpEntityId: onlyScene?.id || "",
+        })
+      );
     }
 
     const clueLessScenes = bundle.scenes.filter((item) => !(item.clueIds || []).length && !String(item.clueNote || "").trim());
     if (clueLessScenes.length) {
-      issues.push({
-        title: "存在空场景",
-        body: `这些场景既没有关联线索，也没有填写关键线索说明：${formatEntityList(clueLessScenes, "title")}。`,
-      });
+      issues.push(
+        createHealthIssue({
+          title: "存在空场景",
+          body: `这些场景既没有关联线索，也没有填写关键线索说明：${formatEntityList(clueLessScenes, "title")}。`,
+          level: "medium",
+          jumpTab: "scenes",
+          jumpEntityId: clueLessScenes[0].id,
+        })
+      );
     }
 
     const orphanNpcs = bundle.npcs.filter(
       (npc) => String(npc.clue || npc.publicInfo || npc.secret || "").trim() && !bundle.scenes.some((scene) => (scene.npcIds || []).includes(npc.id))
     );
     if (orphanNpcs.length) {
-      issues.push({
-        title: "NPC 没有出场路径",
-        body: `这些 NPC 已写了信息，但没有挂到场景里：${formatEntityList(orphanNpcs, "name")}。`,
-      });
+      issues.push(
+        createHealthIssue({
+          title: "NPC 没有出场路径",
+          body: `这些 NPC 已写了信息，但没有挂到场景里：${formatEntityList(orphanNpcs, "name")}。`,
+          level: "medium",
+          jumpTab: "npcs",
+          jumpEntityId: orphanNpcs[0].id,
+        })
+      );
     }
 
     const orphanClueProps = bundle.clueProps.filter(
@@ -810,13 +1072,85 @@
         !bundle.scenes.some((scene) => (scene.cluePropIds || []).includes(clueProp.id))
     );
     if (orphanClueProps.length) {
-      issues.push({
-        title: "线索道具没有出现场景",
-        body: `这些线索道具已经写好，但没有挂到场景里：${formatEntityList(orphanClueProps, "title")}。`,
-      });
+      issues.push(
+        createHealthIssue({
+          title: "线索道具没有出现场景",
+          body: `这些线索道具已经写好，但没有挂到场景里：${formatEntityList(orphanClueProps, "title")}。`,
+          level: "medium",
+          jumpTab: "clueProps",
+          jumpEntityId: orphanClueProps[0].id,
+        })
+      );
     }
 
-    return issues.slice(0, 8);
+    const singlePathKeyClues = keyClues.filter((item) => {
+      const linkedScenes = scenesByKeyClue.get(item.id) || [];
+      return linkedScenes.length === 1 && !String(item.fallback || "").trim();
+    });
+    if (singlePathKeyClues.length) {
+      const sample = singlePathKeyClues[0];
+      const sampleScene = (scenesByKeyClue.get(sample.id) || [])[0];
+      issues.push(
+        createHealthIssue({
+          title: "关键线索存在单点断链风险",
+          body: `「${sample.title}」仅出现在「${sampleScene?.title || "单一场景"}」且没有备用来源，建议至少补一条替代获取路径。`,
+          level: "high",
+          jumpTab: "clues",
+          jumpEntityId: sample.id,
+        })
+      );
+    }
+
+    const keyCluesWithoutPropSupport = [];
+    keyClues.forEach((clue) => {
+      const linkedScenes = scenesByKeyClue.get(clue.id) || [];
+      linkedScenes.forEach((scene) => {
+        if (!(scene.cluePropIds || []).length) {
+          keyCluesWithoutPropSupport.push({ clue, scene });
+        }
+      });
+    });
+    if (keyCluesWithoutPropSupport.length) {
+      const sample = keyCluesWithoutPropSupport[0];
+      issues.push(
+        createHealthIssue({
+          title: "关键线索缺少展示材料支撑",
+          body: `关键线索「${sample.clue.title}」所在场景「${sample.scene.title}」没有任何线索道具，建议准备至少一份可展示材料。`,
+          level: "medium",
+          jumpTab: "scenes",
+          jumpEntityId: sample.scene.id,
+        })
+      );
+    }
+
+    if (currentScene) {
+      if (!(currentScene.clueIds || []).length && !String(currentScene.clueNote || "").trim() && !String(currentScene.fallback || "").trim()) {
+        issues.push(
+          createHealthIssue({
+            title: "当前场景推进风险较高",
+            body: `当前场景「${currentScene.title}」没有线索挂接、线索说明和补救路径，跑团时容易出现调查停滞。`,
+            level: "high",
+            jumpTab: "scenes",
+            jumpEntityId: currentScene.id,
+          })
+        );
+      }
+
+      const hasSceneDescription = bundle.sceneDescriptions.some((entry) => entry.sceneId === currentScene.id);
+      if (!hasSceneDescription) {
+        issues.push(
+          createHealthIssue({
+            title: "当前场景缺少主持素材",
+            body: `当前场景「${currentScene.title}」还没有绑定任何场景描述，建议先准备朗读稿或氛围文本。`,
+            level: "suggestion",
+            jumpPage: "sceneDescriptions",
+            jumpTab: "overview",
+          })
+        );
+      }
+    }
+
+    return issues.slice(0, 12);
   }
 
   function uniqueById(items) {
@@ -1220,7 +1554,11 @@
     const searchable = [
       ...npcs.map((npc) => ({ type: "NPC", title: npc.name, body: `${npc.role} · ${npc.publicInfo}` })),
       ...clues.map((clue) => ({ type: "线索", title: clue.title, body: `${clue.source} · ${clue.content}` })),
-      ...clueProps.map((clueProp) => ({ type: "线索道具", title: clueProp.title, body: `${clueProp.type} · ${clueProp.effect}` })),
+      ...clueProps.map((clueProp) => ({
+        type: "线索道具",
+        title: clueProp.title,
+        body: `${clueProp.type} · ${clueProp.effect} · ${normalizeTagList(clueProp.tags).join(" / ")} · ${clueProp.insertText || ""}`,
+      })),
       ...sceneDescriptions.map((entry) => ({ type: "场景描述", title: entry.title, body: `${entry.tag} · ${entry.content}` })),
       ...(campaign ? [{ type: "案件", title: campaign.title, body: campaign.pitch }] : []),
     ].filter((item) => `${item.title} ${item.body}`.toLowerCase().includes(normalizedQuery));
@@ -1321,9 +1659,23 @@
                 ? healthIssues
                     .map(
                       (issue) => `
-                      <article class="issue-item">
-                        <strong>${issue.title}</strong>
+                      <article class="issue-item ${getHealthLevelClass(issue.level)}">
+                        <div class="issue-head">
+                          <strong>${issue.title}</strong>
+                          <span class="pill ${issue.level === "high" ? "danger" : issue.level === "medium" ? "warning" : ""}">${getHealthLevelLabel(
+                            issue.level
+                          )}</span>
+                        </div>
                         <span class="small-copy">${issue.body}</span>
+                        <button
+                          type="button"
+                          class="issue-jump-button"
+                          data-health-jump-page="${issue.jumpPage || "workspace"}"
+                          data-health-jump-tab="${issue.jumpTab || "overview"}"
+                          data-health-jump-id="${issue.jumpEntityId || ""}"
+                        >
+                          跳到对应编辑项
+                        </button>
                       </article>`
                     )
                     .join("")
@@ -1333,6 +1685,8 @@
         </section>
       </div>
     `;
+
+    bindHealthIssueActions(root);
   }
 
   function renderCampaigns(root, editingCampaign) {
@@ -1560,20 +1914,43 @@
         { name: "title", label: "标题", type: "input", required: true },
         { name: "type", label: "类型", type: "input", placeholder: "报纸 / 信件 / 档案" },
         { name: "template", label: "展示模板", type: "select", options: ["通用纸张", "报纸剪报", "私人信件", "档案记录", "医疗报告"] },
+        { name: "tags", label: "标签（逗号分隔）", type: "taglist", wide: true, placeholder: "例如：关键线索, 法医室, 开场" },
+        { name: "insertText", label: "快速插入文本", type: "textarea", rows: 3, wide: true },
+        { name: "isFavorite", label: "收藏这条线索道具", type: "checkbox", wide: true },
         { name: "reveal", label: "揭示时机", type: "textarea", rows: 2, wide: true },
         { name: "effect", label: "作用", type: "textarea", rows: 3, wide: true },
         { name: "contentText", label: "正文内容", type: "textarea", rows: 8, wide: true },
       ],
       renderCard(item) {
+        const tagText = normalizeTagList(item.tags).join(" / ");
         return `
           <article class="clue-prop-card">
-            <header><div><p class="eyebrow">${item.type || "线索道具"}</p><h3>${item.title}</h3></div></header>
+            <header>
+              <div><p class="eyebrow">${item.type || "线索道具"}</p><h3>${item.title}</h3></div>
+              ${item.isFavorite ? '<span class="pill warning">已收藏</span>' : '<span class="pill">未收藏</span>'}
+            </header>
             <div class="key-value compact">
               <div><strong>展示模板</strong><span>${inferCluePropTemplate(item)}</span></div>
               <div><strong>揭示时机</strong><span>${item.reveal || "未填写"}</span></div>
               <div><strong>作用</strong><span>${item.effect || "未填写"}</span></div>
+              <div><strong>标签</strong><span>${tagText || "未设置标签"}</span></div>
+              <div><strong>使用次数</strong><span>${Math.max(0, Number(item.usageCount) || 0)} 次</span></div>
+              <div><strong>最近使用</strong><span>${item.lastUsedAt || "暂无"}</span></div>
             </div>
+            ${
+              String(item.insertText || "").trim()
+                ? `<div class="quick-insert-preview"><strong>快速插入</strong><p class="small-copy">${item.insertText}</p></div>`
+                : ""
+            }
             ${renderCluePropPreview(item)}
+            <div class="button-row">
+              <button type="button" class="action-button" data-toggle-clue-prop-favorite="true" data-clue-prop-id="${item.id}">${
+                item.isFavorite ? "取消收藏" : "收藏"
+              }</button>
+              <button type="button" class="action-button" data-copy-clue-prop-content="true" data-clue-prop-id="${item.id}">复制正文</button>
+              <button type="button" class="action-button" data-insert-clue-prop-log="true" data-clue-prop-id="${item.id}">插入跑团记录</button>
+              <button type="button" class="action-button" data-mark-clue-prop-used="true" data-clue-prop-id="${item.id}">标记已使用</button>
+            </div>
             <div class="button-row">
               <button type="button" class="action-button" data-edit-entity="${item.id}">编辑</button>
               <button type="button" class="action-button danger" data-delete-entity="${item.id}">删除</button>
@@ -1586,6 +1963,24 @@
 
   function renderField(field, draft, bundle) {
     const value = draft[field.name] != null ? draft[field.name] : field.type === "multiselect" ? [] : "";
+
+    if (field.type === "checkbox") {
+      return `
+        <label class="${field.wide ? "span-2 checkbox-toggle" : "checkbox-toggle"}">
+          <input type="checkbox" name="${field.name}" ${value ? "checked" : ""} />
+          <span>${field.label}</span>
+        </label>
+      `;
+    }
+
+    if (field.type === "taglist") {
+      return `
+        <label class="${field.wide ? "span-2" : ""}">
+          <span>${field.label}</span>
+          <input name="${field.name}" value="${toTagListText(value)}" placeholder="${field.placeholder || ""}" />
+        </label>
+      `;
+    }
 
     if (field.type === "textarea") {
       return `
@@ -1643,7 +2038,15 @@
     const formData = new FormData(form);
     const output = {};
     fields.forEach((field) => {
-      output[field.name] = field.type === "multiselect" ? formData.getAll(field.name) : formData.get(field.name) || "";
+      if (field.type === "multiselect") {
+        output[field.name] = formData.getAll(field.name);
+      } else if (field.type === "checkbox") {
+        output[field.name] = formData.get(field.name) === "on";
+      } else if (field.type === "taglist") {
+        output[field.name] = normalizeTagList(formData.get(field.name) || "");
+      } else {
+        output[field.name] = formData.get(field.name) || "";
+      }
     });
     return output;
   }
@@ -1668,7 +2071,7 @@
       (state.workspaceTab === "overview"
         ? campaign
         : config.fields.reduce((acc, field) => {
-            acc[field.name] = field.type === "multiselect" ? [] : "";
+            acc[field.name] = field.type === "multiselect" ? [] : field.type === "checkbox" ? false : field.type === "taglist" ? [] : "";
             return acc;
           }, {}));
 
@@ -1695,9 +2098,23 @@
                 ? healthIssues
                     .map(
                       (issue) => `
-                      <article class="issue-item">
-                        <strong>${issue.title}</strong>
+                      <article class="issue-item ${getHealthLevelClass(issue.level)}">
+                        <div class="issue-head">
+                          <strong>${issue.title}</strong>
+                          <span class="pill ${issue.level === "high" ? "danger" : issue.level === "medium" ? "warning" : ""}">${getHealthLevelLabel(
+                            issue.level
+                          )}</span>
+                        </div>
                         <span class="small-copy">${issue.body}</span>
+                        <button
+                          type="button"
+                          class="issue-jump-button"
+                          data-health-jump-page="${issue.jumpPage || "workspace"}"
+                          data-health-jump-tab="${issue.jumpTab || "overview"}"
+                          data-health-jump-id="${issue.jumpEntityId || ""}"
+                        >
+                          跳到对应编辑项
+                        </button>
                       </article>`
                     )
                     .join("")
@@ -1819,6 +2236,7 @@
         upsertCampaign(Object.fromEntries(new FormData(event.currentTarget).entries()), campaign.id);
         renderApp();
       });
+      bindHealthIssueActions(root);
       return;
     }
 
@@ -1852,6 +2270,8 @@
         renderApp();
       });
     }
+
+    bindCluePropActionButtons(root);
   }
 
   function renderRunning(root, campaign, bundle) {
@@ -1871,6 +2291,11 @@
     const currentSceneDescriptions = currentScene
       ? getSortedSceneDescriptions(bundle.sceneDescriptions.filter((item) => item.sceneId === currentScene.id))
       : [];
+    const currentSceneClueProps = currentScene
+      ? (currentScene.cluePropIds || []).map((id) => bundle.clueProps.find((item) => item.id === id)).filter(Boolean)
+      : [];
+    const favoriteClueProps = bundle.clueProps.filter((item) => item.isFavorite);
+    const quickInsertClueProps = uniqueById([...currentSceneClueProps, ...favoriteClueProps]);
 
     root.innerHTML = `
       <div class="running-grid">
@@ -1911,6 +2336,33 @@
             </form>
           </section>
         </div>
+        <section class="card">
+          <p class="eyebrow">Quick Insert</p>
+          <h3 class="section-title">快速插入线索道具</h3>
+          <div class="quick-insert-list">
+            ${
+              quickInsertClueProps.length
+                ? quickInsertClueProps
+                    .map((clueProp) => {
+                      const sceneLinked = currentScene ? (currentScene.cluePropIds || []).includes(clueProp.id) : false;
+                      return `
+                      <article class="quick-insert-item">
+                        <div class="quick-insert-head">
+                          <strong>${clueProp.title}</strong>
+                          <span class="pill ${clueProp.isFavorite ? "warning" : ""}">${sceneLinked ? "当前场景" : "收藏"}</span>
+                        </div>
+                        <p class="small-copy">${String(clueProp.insertText || clueProp.effect || "未填写快速插入文本。").slice(0, 140)}</p>
+                        <div class="button-row tight">
+                          <button type="button" class="action-button" data-insert-clue-prop-log="true" data-clue-prop-id="${clueProp.id}">插入记录草稿</button>
+                          <button type="button" class="action-button" data-mark-clue-prop-used="true" data-clue-prop-id="${clueProp.id}">标记已使用</button>
+                        </div>
+                      </article>`;
+                    })
+                    .join("")
+                : `<article class="quick-insert-item"><strong>暂无可快速插入的线索道具</strong><p class="small-copy">默认显示当前场景关联道具与收藏道具。你可以去“线索道具库”先收藏常用条目。</p></article>`
+            }
+          </div>
+        </section>
         <section class="card">
           <p class="eyebrow">Clue Control</p>
           <h3 class="section-title">线索快速状态切换</h3>
@@ -2027,41 +2479,131 @@
         renderApp();
       });
     });
+
+    bindCluePropActionButtons(root);
   }
 
   function renderCluePropsLibrary(root, clueProps) {
-    if (!clueProps.length) {
-      root.innerHTML = `
-        <section class="card empty-state">
-          <p class="eyebrow">线索道具</p>
-          <h3 class="section-title">当前案件还没有线索道具</h3>
-          <p class="muted-copy">你可以在案件工作台的“线索道具”标签中添加线索道具。</p>
-        </section>
-      `;
-      return;
-    }
+    const templates = [...new Set(clueProps.map((item) => inferCluePropTemplate(item)))].sort((a, b) => a.localeCompare(b, "zh-CN"));
+    const tags = [...new Set(clueProps.flatMap((item) => normalizeTagList(item.tags)))].sort((a, b) => a.localeCompare(b, "zh-CN"));
+
+    const filtered = clueProps
+      .filter((item) => !state.cluePropLibraryFavoritesOnly || item.isFavorite)
+      .filter((item) => !state.cluePropLibraryTemplateFilter || inferCluePropTemplate(item) === state.cluePropLibraryTemplateFilter)
+      .filter((item) => !state.cluePropLibraryTagFilter || normalizeTagList(item.tags).includes(state.cluePropLibraryTagFilter))
+      .filter((item) => {
+        const keyword = state.cluePropLibraryQuery.trim().toLowerCase();
+        if (!keyword) return true;
+        return `${item.title || ""} ${item.type || ""} ${item.effect || ""} ${item.contentText || ""} ${normalizeTagList(item.tags).join(" ")}`
+          .toLowerCase()
+          .includes(keyword);
+      })
+      .sort((a, b) => {
+        const favoriteDiff = Number(Boolean(b.isFavorite)) - Number(Boolean(a.isFavorite));
+        if (favoriteDiff !== 0) return favoriteDiff;
+        const timeDiff = String(b.lastUsedAt || "").localeCompare(String(a.lastUsedAt || ""), "zh-CN");
+        if (timeDiff !== 0) return timeDiff;
+        return String(a.title || "").localeCompare(String(b.title || ""), "zh-CN");
+      });
 
     root.innerHTML = `
-      <div class="grid cols-3">
-        ${clueProps
-          .map(
-            (clueProp) => `
-            <article class="card clue-prop-card">
-              <header>
-                <div><p class="eyebrow">${clueProp.type}</p><h3>${clueProp.title}</h3></div>
-                <span class="pill warning">待展示</span>
-              </header>
-              <div class="key-value">
-                <div><strong>展示模板</strong><span>${inferCluePropTemplate(clueProp)}</span></div>
-                <div><strong>触发条件</strong><span>${clueProp.reveal}</span></div>
-                <div><strong>场景效果</strong><span>${clueProp.effect}</span></div>
-              </div>
-              ${renderCluePropPreview(clueProp)}
-            </article>`
-          )
-          .join("")}
-      </div>
+      <section class="card">
+        <p class="eyebrow">Clue Prop Workflow</p>
+        <h3 class="section-title">线索道具筛选与快捷操作</h3>
+        <div class="clue-prop-filter-grid">
+          <label>
+            <span>关键词</span>
+            <input id="clue-prop-filter-query" type="search" value="${state.cluePropLibraryQuery}" placeholder="搜索标题、作用、正文、标签..." />
+          </label>
+          <label>
+            <span>模板筛选</span>
+            <select id="clue-prop-filter-template">
+              <option value="">全部模板</option>
+              ${templates.map((item) => `<option value="${item}" ${state.cluePropLibraryTemplateFilter === item ? "selected" : ""}>${item}</option>`).join("")}
+            </select>
+          </label>
+          <label>
+            <span>标签筛选</span>
+            <select id="clue-prop-filter-tag">
+              <option value="">全部标签</option>
+              ${tags.map((item) => `<option value="${item}" ${state.cluePropLibraryTagFilter === item ? "selected" : ""}>${item}</option>`).join("")}
+            </select>
+          </label>
+          <label class="checkbox-toggle">
+            <input id="clue-prop-filter-favorite" type="checkbox" ${state.cluePropLibraryFavoritesOnly ? "checked" : ""} />
+            <span>只看收藏</span>
+          </label>
+        </div>
+      </section>
+      ${
+        filtered.length
+          ? `<div class="grid cols-3">
+              ${filtered
+                .map((clueProp) => {
+                  const tagText = normalizeTagList(clueProp.tags).join(" / ");
+                  return `
+                <article class="card clue-prop-card">
+                  <header>
+                    <div><p class="eyebrow">${clueProp.type || "线索道具"}</p><h3>${clueProp.title}</h3></div>
+                    ${clueProp.isFavorite ? '<span class="pill warning">已收藏</span>' : '<span class="pill">未收藏</span>'}
+                  </header>
+                  <div class="key-value">
+                    <div><strong>展示模板</strong><span>${inferCluePropTemplate(clueProp)}</span></div>
+                    <div><strong>揭示时机</strong><span>${clueProp.reveal || "未填写"}</span></div>
+                    <div><strong>作用</strong><span>${clueProp.effect || "未填写"}</span></div>
+                    <div><strong>标签</strong><span>${tagText || "未设置标签"}</span></div>
+                    <div><strong>使用次数</strong><span>${Math.max(0, Number(clueProp.usageCount) || 0)} 次</span></div>
+                    <div><strong>最近使用</strong><span>${clueProp.lastUsedAt || "暂无"}</span></div>
+                  </div>
+                  ${
+                    String(clueProp.insertText || "").trim()
+                      ? `<div class="quick-insert-preview"><strong>快速插入</strong><p class="small-copy">${clueProp.insertText}</p></div>`
+                      : ""
+                  }
+                  <div class="button-row">
+                    <button type="button" class="action-button" data-toggle-clue-prop-favorite="true" data-clue-prop-id="${clueProp.id}">${
+                      clueProp.isFavorite ? "取消收藏" : "收藏"
+                    }</button>
+                    <button type="button" class="action-button" data-copy-clue-prop-content="true" data-clue-prop-id="${clueProp.id}">复制正文</button>
+                    <button type="button" class="action-button" data-insert-clue-prop-log="true" data-clue-prop-id="${clueProp.id}">插入跑团记录</button>
+                    <button type="button" class="action-button" data-mark-clue-prop-used="true" data-clue-prop-id="${clueProp.id}">标记已使用</button>
+                  </div>
+                  ${renderCluePropPreview(clueProp)}
+                </article>`;
+                })
+                .join("")}
+            </div>`
+          : `<section class="card empty-state">
+              <p class="eyebrow">线索道具</p>
+              <h3 class="section-title">${clueProps.length ? "没有符合筛选条件的线索道具" : "当前案件还没有线索道具"}</h3>
+              <p class="muted-copy">${
+                clueProps.length ? "可以调整筛选条件，或去案件工作台新增新的线索道具。" : "你可以在案件工作台的“线索道具”标签中添加线索道具。"
+              }</p>
+            </section>`
+      }
     `;
+
+    root.querySelector("#clue-prop-filter-query").addEventListener("input", (event) => {
+      state.cluePropLibraryQuery = event.target.value;
+      renderApp();
+    });
+
+    root.querySelector("#clue-prop-filter-template").addEventListener("change", (event) => {
+      state.cluePropLibraryTemplateFilter = event.target.value;
+      renderApp();
+    });
+
+    root.querySelector("#clue-prop-filter-tag").addEventListener("change", (event) => {
+      state.cluePropLibraryTagFilter = event.target.value;
+      renderApp();
+    });
+
+    root.querySelector("#clue-prop-filter-favorite").addEventListener("change", (event) => {
+      state.cluePropLibraryFavoritesOnly = Boolean(event.target.checked);
+      renderApp();
+    });
+
+    bindCluePropActionButtons(root);
   }
 
   function renderSceneDescriptions(root, campaign, bundle) {
@@ -2316,6 +2858,13 @@
     state.referenceEditMode = false;
     state.editingReferenceSectionIndex = null;
     state.editingReferenceItemIndex = null;
+  }
+
+  function resetCluePropLibraryFilters() {
+    state.cluePropLibraryQuery = "";
+    state.cluePropLibraryTemplateFilter = "";
+    state.cluePropLibraryTagFilter = "";
+    state.cluePropLibraryFavoritesOnly = false;
   }
 
   function renderReference(root) {
@@ -2595,6 +3144,22 @@
     setFlash("案件已删除。", "warning");
   }
 
+  function normalizeCluePropPayload(payload, current) {
+    return {
+      title: String(payload.title || "").trim(),
+      type: String(payload.type || "").trim(),
+      template: inferCluePropTemplate(payload),
+      tags: normalizeTagList(payload.tags),
+      insertText: String(payload.insertText || "").trim(),
+      isFavorite: Boolean(payload.isFavorite),
+      reveal: String(payload.reveal || "").trim(),
+      effect: String(payload.effect || "").trim(),
+      contentText: String(payload.contentText || "").trim(),
+      usageCount: Math.max(0, Number(payload.usageCount != null ? payload.usageCount : current?.usageCount) || 0),
+      lastUsedAt: String(payload.lastUsedAt != null ? payload.lastUsedAt : current?.lastUsedAt || ""),
+    };
+  }
+
   function upsertEntity(entityType, payload, entityId) {
     const collectionName = entityType;
     const collection = data[collectionName];
@@ -2604,18 +3169,21 @@
         : entityType === "clues"
         ? { status: "未获得" }
         : entityType === "clueProps"
-        ? { template: "通用纸张" }
+        ? { template: "通用纸张", isFavorite: false, tags: [], insertText: "", usageCount: 0, lastUsedAt: "" }
         : {};
 
     if (entityId) {
       const target = collection.find((item) => item.id === entityId);
-      Object.assign(target, defaults, payload);
+      if (!target) return;
+      const normalizedPayload = entityType === "clueProps" ? normalizeCluePropPayload(payload, target) : payload;
+      Object.assign(target, entityType === "clueProps" ? {} : defaults, normalizedPayload);
     } else {
+      const normalizedPayload = entityType === "clueProps" ? normalizeCluePropPayload(payload) : payload;
       collection.unshift({
         id: makeId(entityType.slice(0, -1)),
         campaignId: state.currentCampaignId,
         ...defaults,
-        ...payload,
+        ...normalizedPayload,
       });
     }
     state.editingEntityId = null;
@@ -2791,6 +3359,7 @@
       "coc-kp-helper-export.json",
       JSON.stringify(
         {
+          schemaVersion: EXPORT_SCHEMA_VERSION,
           campaigns: data.campaigns,
           scenes: data.scenes,
           clues: data.clues,
@@ -2836,6 +3405,7 @@
       state.searchQuery = "";
       state.draftLogText = "";
       resetReferenceEditorState();
+      resetCluePropLibraryFilters();
       persist();
       setFlash("数据导入成功。", "success");
       renderApp();
@@ -2865,6 +3435,7 @@
     state.searchQuery = "";
     state.draftLogText = "";
     resetReferenceEditorState();
+    resetCluePropLibraryFilters();
     persist();
     setFlash("已恢复示例数据。", "warning");
     renderApp();

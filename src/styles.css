@@ -516,11 +516,43 @@ select {
   border-radius: 14px;
   padding: 12px 14px;
   background: #fffdfa;
+  display: grid;
+  gap: 10px;
 }
 
 .issue-item strong {
   display: block;
-  margin-bottom: 6px;
+}
+
+.issue-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.issue-item.high-risk {
+  border-color: rgba(125, 47, 47, 0.35);
+  background: rgba(125, 47, 47, 0.08);
+}
+
+.issue-item.medium-risk {
+  border-color: rgba(181, 144, 79, 0.32);
+  background: rgba(181, 144, 79, 0.12);
+}
+
+.issue-item.suggestion-risk {
+  border-color: rgba(31, 27, 24, 0.18);
+}
+
+.issue-jump-button {
+  border: 1px solid var(--line);
+  background: #f7efe4;
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 8px 12px;
+  cursor: pointer;
+  justify-self: start;
 }
 
 .relation-item {
@@ -865,6 +897,22 @@ select {
   margin: 0;
 }
 
+.checkbox-toggle {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fffdfa;
+}
+
+.checkbox-toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
 .span-2 {
   grid-column: 1 / -1;
 }
@@ -915,6 +963,63 @@ select {
   border-radius: 14px;
   padding: 12px 14px;
   background: #fffdfa;
+}
+
+.quick-insert-list {
+  display: grid;
+  gap: 12px;
+}
+
+.quick-insert-item {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: #fffdfa;
+}
+
+.quick-insert-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.quick-insert-preview {
+  border: 1px dashed rgba(31, 27, 24, 0.16);
+  border-radius: 14px;
+  background: rgba(247, 239, 228, 0.6);
+  padding: 10px 12px;
+}
+
+.quick-insert-preview p {
+  margin: 6px 0 0;
+}
+
+.clue-prop-filter-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.clue-prop-filter-grid label {
+  display: grid;
+  gap: 8px;
+}
+
+.clue-prop-filter-grid span {
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.clue-prop-filter-grid input,
+.clue-prop-filter-grid select {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #fffdfa;
+  padding: 10px 12px;
 }
 
 .clue-prop-preview {
@@ -1104,7 +1209,8 @@ select {
 
   .entity-form,
   .checkbox-grid,
-  .relation-node-grid {
+  .relation-node-grid,
+  .clue-prop-filter-grid {
     grid-template-columns: 1fr;
   }
 

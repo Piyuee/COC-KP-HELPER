@@ -8,6 +8,12 @@ const APP_JS = path.join(ROOT, "src", "app.js");
 const INDEX_HTML = path.join(ROOT, "index.html");
 const README = path.join(ROOT, "README.md");
 const DOCS_DIR = path.join(ROOT, "docs");
+const REQUIRED_INTERACTION_ATTRS = [
+  "data-toggle-clue-prop-favorite",
+  "data-copy-clue-prop-content",
+  "data-insert-clue-prop-log",
+  "data-mark-clue-prop-used",
+];
 
 function read(file) {
   return fs.readFileSync(file, "utf8");
@@ -85,6 +91,19 @@ function main() {
     const hasDataset = appJs.includes(`dataset.${toCamelDataKey(attr)}`);
     if (!hasSelector && !hasDataset) {
       issues.push(`[事件绑定] ${attr} 看起来用于点击交互，但未在 src/app.js 找到选择器或 dataset 读取。`);
+    }
+  }
+
+  for (const attr of REQUIRED_INTERACTION_ATTRS) {
+    const existsInMarkup = sourceFiles.some((file) => read(file).includes(attr));
+    if (!existsInMarkup) {
+      issues.push(`[关键交互] ${attr} 未在页面标记中出现，可能遗漏了预期按钮。`);
+      continue;
+    }
+    const hasSelector = appJs.includes(`[${attr}]`);
+    const hasDataset = appJs.includes(`dataset.${toCamelDataKey(attr)}`);
+    if (!hasSelector && !hasDataset) {
+      issues.push(`[关键交互] ${attr} 已出现但未找到事件绑定，可能会出现点击无响应。`);
     }
   }
 
