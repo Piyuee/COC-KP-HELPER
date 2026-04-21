@@ -87,7 +87,7 @@ function main() {
   }
 
   for (const attr of [...buttonAttrs].sort()) {
-    const hasSelector = appJs.includes(`[${attr}]`);
+    const hasSelector = appJs.includes(`[${attr}]`) || appJs.includes(`[${attr}=`);
     const hasDataset = appJs.includes(`dataset.${toCamelDataKey(attr)}`);
     if (!hasSelector && !hasDataset) {
       issues.push(`[事件绑定] ${attr} 看起来用于点击交互，但未在 src/app.js 找到选择器或 dataset 读取。`);
@@ -100,7 +100,7 @@ function main() {
       issues.push(`[关键交互] ${attr} 未在页面标记中出现，可能遗漏了预期按钮。`);
       continue;
     }
-    const hasSelector = appJs.includes(`[${attr}]`);
+    const hasSelector = appJs.includes(`[${attr}]`) || appJs.includes(`[${attr}=`);
     const hasDataset = appJs.includes(`dataset.${toCamelDataKey(attr)}`);
     if (!hasSelector && !hasDataset) {
       issues.push(`[关键交互] ${attr} 已出现但未找到事件绑定，可能会出现点击无响应。`);

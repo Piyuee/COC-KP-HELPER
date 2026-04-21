@@ -35,6 +35,7 @@ COC KP Helper 的目标是帮助守秘人：
 - `docs/mvp-spec.md` - MVP scope, priorities, and core flows
 - `docs/data-model.md` - initial relational data model proposal
 - `docs/frontend-architecture.md` - frontend structure and refactor notes
+- `docs/development-roadmap.md` - upcoming development path and milestone priorities
 - `docs/产品介绍手册.md` - Chinese product handbook
 - `docs/使用手册.md` - Chinese user manual
 
@@ -45,6 +46,7 @@ COC KP Helper 的目标是帮助守秘人：
 - `docs/mvp-spec.md` - MVP 范围、优先级和核心流程
 - `docs/data-model.md` - 初版关系型数据模型设计
 - `docs/frontend-architecture.md` - 前端结构与重构说明
+- `docs/development-roadmap.md` - 后续开发路线图与里程碑优先级
 - `docs/产品介绍手册.md` - 中文产品介绍手册
 - `docs/使用手册.md` - 中文使用手册
 

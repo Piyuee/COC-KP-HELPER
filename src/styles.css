@@ -506,6 +506,42 @@ select {
   background: var(--gold);
 }
 
+.summary-center {
+  display: grid;
+  gap: 14px;
+}
+
+.summary-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.summary-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.summary-list li {
+  display: grid;
+  gap: 2px;
+}
+
+.summary-list li strong {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.summary-list li span {
+  color: var(--ink);
+}
+
+.summary-actions .action-button {
+  text-align: center;
+}
+
 .issue-list {
   display: grid;
   gap: 10px;
@@ -1191,6 +1227,7 @@ select {
   .grid.cols-3,
   .grid.cols-2,
   .workspace-columns,
+  .summary-grid,
   .reference-layout.editing,
   .relation-board,
   .two-col,

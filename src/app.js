@@ -1580,6 +1580,52 @@
     root.prepend(results);
   }
 
+  function mergeSummaryText(current, incoming) {
+    const normalizedCurrent = String(current || "").trim();
+    const normalizedIncoming = String(incoming || "").trim();
+    if (!normalizedIncoming) return normalizedCurrent;
+    if (!normalizedCurrent) return normalizedIncoming;
+    if (normalizedCurrent.includes(normalizedIncoming)) return normalizedCurrent;
+    return `${normalizedCurrent}\n${normalizedIncoming}`;
+  }
+
+  function buildSessionDigest(campaign, bundle, healthIssues) {
+    const currentScene = bundle.scenes.find((scene) => scene.id === campaign.currentSceneId) || null;
+    const recentLogs = bundle.sessionLogs.slice(0, 5);
+    const keyObtained = bundle.clues.filter((item) => String(item.type || "").includes("关键") && item.status === "已获得");
+    const keyPending = bundle.clues.filter((item) => String(item.type || "").includes("关键") && item.status !== "已获得");
+    const activeIssue = healthIssues.find((item) => item.level === "high") || healthIssues[0] || null;
+    const topUsedProps = [...bundle.clueProps]
+      .filter((item) => Number(item.usageCount) > 0)
+      .sort((a, b) => Number(b.usageCount || 0) - Number(a.usageCount || 0))
+      .slice(0, 3);
+
+    const knowledgeParts = [];
+    if (currentScene) knowledgeParts.push(`当前焦点场景为「${currentScene.title}」。`);
+    if (keyObtained.length) knowledgeParts.push(`玩家已掌握关键线索：${keyObtained.map((item) => item.title).join(" / ")}。`);
+    if (recentLogs[0]) knowledgeParts.push(`最近一次推进：${recentLogs[0].text}`);
+    if (!knowledgeParts.length) knowledgeParts.push("本场暂无有效推进记录，建议回看跑团记录补全关键节点。");
+
+    const unresolvedParts = [];
+    if (keyPending.length) unresolvedParts.push(`仍待获得的关键线索：${keyPending.map((item) => item.title).join(" / ")}。`);
+    if (activeIssue) unresolvedParts.push(`当前最大风险：${activeIssue.title}。`);
+    if (!unresolvedParts.length) unresolvedParts.push("关键线索路径暂时完整，可继续强化细节和表现。");
+
+    const nextParts = [];
+    if (activeIssue) nextParts.push(`优先处理「${activeIssue.title}」：${activeIssue.body}`);
+    if (keyPending[0]) nextParts.push(`下场建议优先投放「${keyPending[0].title}」并准备至少一条补救路径。`);
+    if (topUsedProps.length) nextParts.push(`可复用高频道具：${topUsedProps.map((item) => item.title).join(" / ")}。`);
+    if (!nextParts.length) nextParts.push("下场可从玩家最关注的怀疑对象切入，并配一条可见线索道具。");
+
+    return {
+      recentLogs,
+      knowledgeText: knowledgeParts.join(" "),
+      unresolvedText: unresolvedParts.join(" "),
+      nextSuggestionText: nextParts.join(" "),
+      topUsedProps,
+    };
+  }
+
   function renderDashboard(root, campaign, bundle) {
     if (!campaign) {
       root.innerHTML = `
@@ -1596,6 +1642,7 @@
     const unresolvedThreads = bundle.clues.filter((item) => item.status !== "已获得").length;
     const currentScene = bundle.scenes.find((scene) => scene.id === campaign.currentSceneId);
     const healthIssues = getHealthCheck(campaign, bundle);
+    const digest = buildSessionDigest(campaign, bundle, healthIssues);
 
     root.innerHTML = `
       <div class="grid cols-4">
@@ -1616,6 +1663,40 @@
           <div class="label">待推进线索</div>
         </article>
       </div>
+      <section class="card summary-center" style="margin-top: 18px;">
+        <p class="eyebrow">Session Digest</p>
+        <h3 class="section-title">团后总结中心</h3>
+        <div class="summary-grid">
+          <article class="mini-card">
+            <h4>本场关键事件</h4>
+            ${
+              digest.recentLogs.length
+                ? `<ul class="summary-list">${digest.recentLogs
+                    .map((entry) => `<li><strong>${entry.createdAt}</strong><span>${entry.text}</span></li>`)
+                    .join("")}</ul>`
+                : '<p class="small-copy">还没有跑团记录，建议先去“跑团模式”补充关键事件。</p>'
+            }
+          </article>
+          <article class="mini-card">
+            <h4>玩家当前认知（建议稿）</h4>
+            <p class="small-copy">${digest.knowledgeText}</p>
+          </article>
+          <article class="mini-card">
+            <h4>未解决问题（建议稿）</h4>
+            <p class="small-copy">${digest.unresolvedText}</p>
+          </article>
+          <article class="mini-card">
+            <h4>下次开场建议（建议稿）</h4>
+            <p class="small-copy">${digest.nextSuggestionText}</p>
+          </article>
+        </div>
+        <div class="button-row summary-actions">
+          <button type="button" class="action-button" data-apply-digest-knowledge="true">写入“玩家已知”</button>
+          <button type="button" class="action-button" data-apply-digest-next="true">写入“下一步建议”</button>
+          <button type="button" class="action-button primary" data-apply-digest-all="true">两项都写入</button>
+          <button type="button" class="action-button" data-save-digest-log="true">保存为跑团记录</button>
+        </div>
+      </section>
       <div class="workspace-columns" style="margin-top: 18px;">
         <section class="card">
           <p class="eyebrow">Campaign Snapshot</p>
@@ -1687,6 +1768,47 @@
     `;
 
     bindHealthIssueActions(root);
+
+    root.querySelector('[data-apply-digest-knowledge="true"]').addEventListener("click", () => {
+      upsertCampaign(
+        {
+          playerKnowledge: mergeSummaryText(campaign.playerKnowledge, digest.knowledgeText),
+        },
+        campaign.id
+      );
+      setFlash("已把建议稿写入“玩家已知”。", "success");
+      renderApp();
+    });
+
+    root.querySelector('[data-apply-digest-next="true"]').addEventListener("click", () => {
+      upsertCampaign(
+        {
+          nextSuggestion: mergeSummaryText(campaign.nextSuggestion, digest.nextSuggestionText),
+        },
+        campaign.id
+      );
+      setFlash("已把建议稿写入“下一步建议”。", "success");
+      renderApp();
+    });
+
+    root.querySelector('[data-apply-digest-all="true"]').addEventListener("click", () => {
+      upsertCampaign(
+        {
+          playerKnowledge: mergeSummaryText(campaign.playerKnowledge, digest.knowledgeText),
+          nextSuggestion: mergeSummaryText(campaign.nextSuggestion, digest.nextSuggestionText),
+        },
+        campaign.id
+      );
+      setFlash("已把团后总结建议写回案件总览。", "success");
+      renderApp();
+    });
+
+    root.querySelector('[data-save-digest-log="true"]').addEventListener("click", () => {
+      const digestText = `【团后总结】\n玩家当前认知：${digest.knowledgeText}\n未解决问题：${digest.unresolvedText}\n下次建议：${digest.nextSuggestionText}`;
+      addSessionLog(digestText);
+      setFlash("已把团后总结保存为跑团记录。", "success");
+      renderApp();
+    });
   }
 
   function renderCampaigns(root, editingCampaign) {
