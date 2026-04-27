@@ -542,6 +542,117 @@ select {
   text-align: center;
 }
 
+.clue-progress-board {
+  display: grid;
+  gap: 16px;
+}
+
+.clue-progress-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.clue-progress-stats,
+.clue-progress-alerts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.clue-progress-alert {
+  border: 1px solid rgba(125, 47, 47, 0.16);
+  background: #fff6f1;
+  border-radius: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+  display: grid;
+  gap: 4px;
+  text-align: left;
+}
+
+.clue-progress-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fffdfa;
+}
+
+.clue-progress-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 980px;
+}
+
+.clue-progress-table th,
+.clue-progress-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid rgba(31, 27, 24, 0.08);
+  vertical-align: top;
+  text-align: left;
+}
+
+.clue-progress-table th {
+  font-size: 0.84rem;
+  color: var(--muted);
+  background: #f8f2ea;
+  white-space: nowrap;
+}
+
+.clue-progress-table tr.is-risk td {
+  background: rgba(125, 47, 47, 0.03);
+}
+
+.table-jump-button,
+.table-mini-button {
+  border: 1px solid var(--line);
+  background: #f7efe4;
+  color: var(--ink);
+  border-radius: 10px;
+  padding: 8px 10px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.table-jump-button {
+  width: 100%;
+}
+
+.table-action-stack {
+  display: grid;
+  gap: 8px;
+  min-width: 132px;
+}
+
+.matrix-badge,
+.matrix-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 62px;
+  padding: 6px 8px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
+.matrix-badge.good,
+.matrix-cell.supported {
+  background: rgba(62, 114, 72, 0.1);
+  color: #2b6036;
+}
+
+.matrix-badge.risk,
+.matrix-cell.unsupported {
+  background: rgba(125, 47, 47, 0.1);
+  color: var(--accent);
+}
+
+.matrix-cell.empty {
+  background: #f0ebe3;
+  color: var(--muted);
+}
+
 .issue-list {
   display: grid;
   gap: 10px;
@@ -1238,6 +1349,10 @@ select {
   .topbar {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .clue-progress-head {
+    flex-direction: column;
   }
 
   .search-box {

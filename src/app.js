@@ -839,6 +839,39 @@
     });
   }
 
+  function bindClueProgressBoardActions(root) {
+    root.querySelectorAll("[data-clue-progress-open-clue]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.currentPage = "workspace";
+        state.workspaceTab = "clues";
+        state.editingEntityId = button.dataset.clueProgressOpenClue;
+        renderApp();
+      });
+    });
+
+    root.querySelectorAll("[data-clue-progress-open-scene]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.currentPage = "workspace";
+        state.workspaceTab = "scenes";
+        state.editingEntityId = button.dataset.clueProgressOpenScene;
+        renderApp();
+      });
+    });
+
+    root.querySelectorAll("[data-fill-clue-fallback]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const clue = data.clues.find((item) => item.id === button.dataset.fillClueFallback);
+        if (!clue) return;
+        const linkedScenes = data.scenes.filter((scene) => (scene.clueIds || []).includes(clue.id));
+        const sceneText = linkedScenes.length ? linkedScenes.map((scene) => `「${scene.title}」`).join(" / ") : "相关场景";
+        clue.fallback = `待补：可通过${sceneText}中的 NPC、线索道具或场景描述提供替代入口。`;
+        persist();
+        setFlash(`已为「${clue.title}」补上备用来源占位。`, "success");
+        renderApp();
+      });
+    });
+  }
+
   function inferCluePropTemplate(clueProp) {
     const template = String(clueProp.template || "").trim();
     if (template) return template;
@@ -1151,6 +1184,154 @@
     }
 
     return issues.slice(0, 12);
+  }
+
+  function getClueProgressBoard(bundle) {
+    const keyClues = bundle.clues.filter((item) => String(item.type || "").includes("关键"));
+    const sceneMap = new Map(bundle.scenes.map((scene) => [scene.id, scene]));
+
+    const rows = keyClues.map((clue) => {
+      const linkedScenes = bundle.scenes.filter((scene) => (scene.clueIds || []).includes(clue.id));
+      const fallbackReady = Boolean(String(clue.fallback || "").trim());
+      const leadReady = Boolean(String(clue.leadsTo || "").trim());
+      const propSupportedScenes = linkedScenes.filter((scene) => (scene.cluePropIds || []).length);
+      const weakScenes = linkedScenes.filter((scene) => !(scene.cluePropIds || []).length);
+
+      return {
+        clue,
+        linkedScenes,
+        fallbackReady,
+        leadReady,
+        pathCount: linkedScenes.length,
+        propSupportCount: propSupportedScenes.length,
+        weakScenes,
+        cells: bundle.scenes.map((scene) => {
+          const linked = linkedScenes.some((item) => item.id === scene.id);
+          const sceneRef = sceneMap.get(scene.id);
+          return {
+            scene,
+            linked,
+            hasPropSupport: linked ? Boolean((sceneRef?.cluePropIds || []).length) : false,
+          };
+        }),
+      };
+    });
+
+    const riskRows = rows.filter((row) => row.pathCount <= 1 || !row.fallbackReady || !row.leadReady || row.weakScenes.length);
+
+    return {
+      keyClues,
+      rows,
+      riskRows,
+      totalPathCount: rows.reduce((sum, row) => sum + row.pathCount, 0),
+      multiPathCount: rows.filter((row) => row.pathCount >= 2).length,
+      fallbackReadyCount: rows.filter((row) => row.fallbackReady).length,
+    };
+  }
+
+  function renderClueProgressBoard(bundle) {
+    const board = getClueProgressBoard(bundle);
+
+    if (!board.keyClues.length) {
+      return `
+        <article class="card">
+          <p class="eyebrow">Clue Progress Board</p>
+          <h3 class="section-title">线索推进看板</h3>
+          <p class="muted-copy">当前还没有关键线索。先在“线索”里标记出主推进抓手，这里就会出现覆盖矩阵和路径提示。</p>
+        </article>
+      `;
+    }
+
+    return `
+      <article class="card clue-progress-board">
+        <div class="clue-progress-head">
+          <div>
+            <p class="eyebrow">Clue Progress Board</p>
+            <h3 class="section-title">线索推进看板</h3>
+          </div>
+          <div class="clue-progress-stats">
+            <span class="pill warning">关键线索 ${board.keyClues.length}</span>
+            <span class="pill ${board.multiPathCount === board.keyClues.length ? "warning" : "danger"}">双路径覆盖 ${board.multiPathCount}/${board.keyClues.length}</span>
+            <span class="pill ${board.fallbackReadyCount === board.keyClues.length ? "warning" : "danger"}">备用来源 ${board.fallbackReadyCount}/${board.keyClues.length}</span>
+          </div>
+        </div>
+        ${
+          board.riskRows.length
+            ? `<div class="clue-progress-alerts">
+                ${board.riskRows
+                  .slice(0, 4)
+                  .map((row) => {
+                    const notes = [];
+                    if (row.pathCount <= 1) notes.push("路径偏少");
+                    if (!row.fallbackReady) notes.push("缺备用来源");
+                    if (!row.leadReady) notes.push("缺导向");
+                    if (row.weakScenes.length) notes.push("缺展示材料");
+                    return `
+                    <button type="button" class="clue-progress-alert" data-clue-progress-open-clue="${row.clue.id}">
+                      <strong>${row.clue.title}</strong>
+                      <span class="small-copy">${notes.join(" / ")}</span>
+                    </button>`;
+                  })
+                  .join("")}
+              </div>`
+            : `<p class="small-copy">当前关键线索都已经具备基本覆盖，可以继续打磨细节和表现。</p>`
+        }
+        <div class="clue-progress-table-wrap">
+          <table class="clue-progress-table">
+            <thead>
+              <tr>
+                <th>关键线索</th>
+                <th>状态</th>
+                <th>路径数</th>
+                <th>备用来源</th>
+                <th>导向</th>
+                ${bundle.scenes
+                  .map(
+                    (scene) => `
+                    <th>
+                      <button type="button" class="table-jump-button" data-clue-progress-open-scene="${scene.id}">${scene.title}</button>
+                    </th>`
+                  )
+                  .join("")}
+                <th>动作</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${board.rows
+                .map((row) => `
+                  <tr class="${row.pathCount <= 1 || !row.fallbackReady ? "is-risk" : ""}">
+                    <td>
+                      <button type="button" class="table-jump-button" data-clue-progress-open-clue="${row.clue.id}">${row.clue.title}</button>
+                    </td>
+                    <td><span class="pill ${row.clue.status === "已获得" ? "warning" : row.clue.status === "未获得" ? "danger" : ""}">${row.clue.status}</span></td>
+                    <td><span class="matrix-badge ${row.pathCount >= 2 ? "good" : "risk"}">${row.pathCount}</span></td>
+                    <td><span class="matrix-badge ${row.fallbackReady ? "good" : "risk"}">${row.fallbackReady ? "已准备" : "缺失"}</span></td>
+                    <td><span class="matrix-badge ${row.leadReady ? "good" : "risk"}">${row.leadReady ? "已填写" : "缺失"}</span></td>
+                    ${row.cells
+                      .map((cell) => {
+                        if (!cell.linked) return '<td><span class="matrix-cell empty">-</span></td>';
+                        return `<td><span class="matrix-cell ${cell.hasPropSupport ? "supported" : "unsupported"}">${
+                          cell.hasPropSupport ? "有材料" : "缺材料"
+                        }</span></td>`;
+                      })
+                      .join("")}
+                    <td>
+                      <div class="table-action-stack">
+                        <button type="button" class="table-mini-button" data-clue-progress-open-clue="${row.clue.id}">编辑线索</button>
+                        ${
+                          row.pathCount && !row.fallbackReady
+                            ? `<button type="button" class="table-mini-button" data-fill-clue-fallback="${row.clue.id}">补备用来源占位</button>`
+                            : ""
+                        }
+                      </div>
+                    </td>
+                  </tr>`)
+                .join("")}
+            </tbody>
+          </table>
+        </div>
+      </article>
+    `;
   }
 
   function uniqueById(items) {
@@ -1697,6 +1878,9 @@
           <button type="button" class="action-button" data-save-digest-log="true">保存为跑团记录</button>
         </div>
       </section>
+      <div style="margin-top: 18px;">
+        ${renderClueProgressBoard(bundle)}
+      </div>
       <div class="workspace-columns" style="margin-top: 18px;">
         <section class="card">
           <p class="eyebrow">Campaign Snapshot</p>
@@ -1768,6 +1952,7 @@
     `;
 
     bindHealthIssueActions(root);
+    bindClueProgressBoardActions(root);
 
     root.querySelector('[data-apply-digest-knowledge="true"]').addEventListener("click", () => {
       upsertCampaign(
